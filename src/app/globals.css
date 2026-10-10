@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-primary: #CF2E2E;
+    --brand-primary-hover: #AA2227;
+    --brand-deep: #741F24;
+    --brand-charcoal: #333333;
+    --brand-gold: #CF8D4D;
+    --brand-tint: #FFF1EE;
+    --canvas: #F8F9FA;
+    --surface: #FFFFFF;
+    --text-primary: #24252B;
+    --text-muted: #667085;
+    --border: #E4E7EC;
+    --positive: #16794A;
+    --negative: #B42318;
+    --warning: #A96514;
+    --focus-ring: #CF2E2E;
+  }
+}
+
+body {
+  background-color: var(--canvas);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-feature-settings: 'tnum' on, 'lnum' on;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Financial Table and Tabular Numbers */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* Active Nav Indicator Animation */
+.nav-item-active {
+  background-color: rgba(207, 46, 46, 0.12);
+  border-left: 4px solid #CF2E2E;
+  color: #FFFFFF;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
