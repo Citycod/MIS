@@ -3,13 +3,14 @@ import { TrendingUp, Target, AlertCircle } from "lucide-react";
 
 interface KpiCardProps {
   title: string;
-  value: number | string;
-  target?: number;
-  gap?: number;
-  achievementPercentage?: number;
+  value: number | string | null;
+  target?: number | string;
+  gap?: number | string;
+  achievementPercentage?: number | string;
   subtitle?: string;
   currency?: string;
   type?: "currency" | "percent" | "number";
+  compact?: boolean;
   highlightColor?: "primary" | "positive" | "negative" | "warning";
 }
 
@@ -23,13 +24,14 @@ export function KpiCard({
   currency = "NGN",
   type = "currency",
   highlightColor = "primary",
+  compact = false,
 }: KpiCardProps) {
   const formattedValue =
     type === "currency"
-      ? formatCurrency(value, currency)
+      ? formatCurrency(value, currency, compact)
       : type === "percent"
-      ? formatPercent(Number(value))
-      : String(value);
+      ? formatPercent(value)
+      : value === null ? "—" : String(value);
 
   const formattedTarget = target !== undefined ? formatCurrency(target, currency, true) : null;
   const formattedGap = gap !== undefined ? formatCurrency(gap, currency, true) : null;
@@ -57,14 +59,14 @@ export function KpiCard({
             <div>
               <div className="flex justify-between text-xs font-bold mb-1">
                 <span className="text-[#667085]">Target Achievement</span>
-                <span className={cn(achievementPercentage >= 100 ? "text-[#16794A]" : "text-[#CF2E2E]")}>
+                <span className={cn(Number(achievementPercentage) >= 100 ? "text-[#16794A]" : "text-[#CF2E2E]")}>
                   {formatPercent(achievementPercentage)}
                 </span>
               </div>
               <div className="w-full h-2 bg-[#F8F9FA] border border-[#E4E7EC] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[#CF2E2E] rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(achievementPercentage, 100)}%` }}
+                  style={{ width: `${Math.max(0, Math.min(Number(achievementPercentage), 100))}%` }}
                 />
               </div>
             </div>

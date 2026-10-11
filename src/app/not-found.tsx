@@ -11,7 +11,7 @@ export default function NotFound() {
 
         <h2 className="text-xl font-bold text-[#24252B] mb-2">404 — Page Not Found</h2>
         <p className="text-xs text-[#667085] leading-relaxed mb-4">
-          The requested page or route does not exist in the Performance Information System.
+          The requested page or route does not exist in the Management Information System.
         </p>
 
         {/* Removed features explanation box */}

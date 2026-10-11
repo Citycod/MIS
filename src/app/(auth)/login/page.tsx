@@ -39,11 +39,11 @@ export default function LoginPage() {
           <div>
             <div className="flex items-center gap-3 mb-8">
               <div className="w-10 h-10 rounded-xl bg-[#CF2E2E] flex items-center justify-center font-bold text-white shadow-md text-lg">
-                PIS
+                MIS
               </div>
               <div>
-                <h1 className="font-extrabold text-xl tracking-tight leading-tight">PIS Enterprise</h1>
-                <p className="text-xs text-[#CF8D4D] font-medium">Performance Information System</p>
+                <h1 className="font-extrabold text-xl tracking-tight leading-tight">MIS Enterprise</h1>
+                <p className="text-xs text-[#CF8D4D] font-medium">Management Information System</p>
               </div>
             </div>
 

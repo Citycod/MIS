@@ -1,0 +1,50 @@
+# Phase 2 changed files
+
+No commits, pushes, migrations or deployments were performed.
+
+## Application and verification files
+
+- [.gitignore](../../../.gitignore)
+- [README.md](../../../README.md)
+- [doc/qa/phase2/CHANGED_FILES.md](../../../doc/qa/phase2/CHANGED_FILES.md)
+- [doc/qa/phase2/IMPLEMENTATION.md](../../../doc/qa/phase2/IMPLEMENTATION.md)
+- [doc/qa/phase2/SCREENSHOTS.md](../../../doc/qa/phase2/SCREENSHOTS.md)
+- [package.json](../../../package.json)
+- [playwright.config.ts](../../../playwright.config.ts)
+- [pnpm-lock.yaml](../../../pnpm-lock.yaml)
+- [src/app/(workspace)/error.tsx](../../../src/app/(workspace)/error.tsx)
+- [src/app/(workspace)/layout.tsx](../../../src/app/(workspace)/layout.tsx)
+- [src/app/(workspace)/loading.tsx](../../../src/app/(workspace)/loading.tsx)
+- [src/app/(workspace)/regional/dashboard/page.tsx](../../../src/app/(workspace)/regional/dashboard/page.tsx)
+- [src/app/(workspace)/regional/relationship-officers/[roId]/page.tsx](../../../src/app/(workspace)/regional/relationship-officers/[roId]/page.tsx)
+- [src/app/(workspace)/regional/relationship-officers/page.tsx](../../../src/app/(workspace)/regional/relationship-officers/page.tsx)
+- [src/app/(workspace)/ro/dashboard/page.tsx](../../../src/app/(workspace)/ro/dashboard/page.tsx)
+- [src/app/globals.css](../../../src/app/globals.css)
+- [src/components/dashboard/monthly-movement-table.tsx](../../../src/components/dashboard/monthly-movement-table.tsx)
+- [src/components/dashboard/performance-dashboard.tsx](../../../src/components/dashboard/performance-dashboard.tsx)
+- [src/components/dashboard/period-switcher.tsx](../../../src/components/dashboard/period-switcher.tsx)
+- [src/components/dashboard/ro-comparison-table.tsx](../../../src/components/dashboard/ro-comparison-table.tsx)
+- [src/components/filters/global-filter-bar.tsx](../../../src/components/filters/global-filter-bar.tsx)
+- [src/components/layout/sidebar.tsx](../../../src/components/layout/sidebar.tsx)
+- [src/components/layout/topbar.tsx](../../../src/components/layout/topbar.tsx)
+- [src/components/superset/superset-dashboard-placeholder.tsx](../../../src/components/superset/superset-dashboard-placeholder.tsx)
+- [src/components/ui/access-denied.tsx](../../../src/components/ui/access-denied.tsx)
+- [src/components/ui/kpi-card.tsx](../../../src/components/ui/kpi-card.tsx)
+- [src/lib/filters.ts](../../../src/lib/filters.ts)
+- [src/lib/server/repository/mock-repository.ts](../../../src/lib/server/repository/mock-repository.ts)
+- [src/lib/server/security/auth.ts](../../../src/lib/server/security/auth.ts)
+- [src/lib/server/security/filter-options.ts](../../../src/lib/server/security/filter-options.ts)
+- [src/lib/server/security/scope.ts](../../../src/lib/server/security/scope.ts)
+- [src/lib/utils.ts](../../../src/lib/utils.ts)
+- [src/mocks/dashboard-snapshots.json](../../../src/mocks/dashboard-snapshots.json)
+- [src/types/repository.ts](../../../src/types/repository.ts)
+- [tests/phase2/dashboards.spec.ts](../../../tests/phase2/dashboards.spec.ts)
+
+## Captured screenshots
+
+- [regional-desktop.png](regional-desktop.png)
+- [regional-mobile.png](regional-mobile.png)
+- [regional-tablet.png](regional-tablet.png)
+- [ro-desktop.png](ro-desktop.png)
+- [ro-mobile.png](ro-mobile.png)
+- [ro-tablet.png](ro-tablet.png)

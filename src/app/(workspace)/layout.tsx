@@ -3,7 +3,8 @@ import { getCurrentSession } from "@/lib/server/security/auth";
 import { normalizeAuthorizedScope } from "@/lib/server/security/scope";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
-import { GlobalFilterBar } from "@/components/filters/global-filter-bar";
+import { WorkspaceFilterBar } from "@/components/filters/global-filter-bar";
+import { getFilterOptions } from "@/lib/server/security/filter-options";
 import { MOCK_REGIONS } from "@/mocks/fixtures";
 
 interface WorkspaceLayoutProps {
@@ -22,7 +23,7 @@ export default async function WorkspaceLayout({ children }: WorkspaceLayoutProps
   const regionName = regionObj ? regionObj.name : scope.effectiveRegionId;
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
+    <div className="flex min-h-screen bg-[#F8F9FA]">
       {/* Sidebar Navigation */}
       <Sidebar
         role={session.user.role}
@@ -32,12 +33,12 @@ export default async function WorkspaceLayout({ children }: WorkspaceLayoutProps
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0">
         <Topbar user={session.user} />
 
-        <main className="flex-1 overflow-y-auto p-6">
+        <main id="main-content" className="min-w-0 flex-1 p-4 md:p-6 lg:p-7">
           {/* Universal Global Filter Bar above content */}
-          <GlobalFilterBar scope={scope} initialFilters={filters} />
+          <WorkspaceFilterBar scope={scope} initialFilters={filters} options={getFilterOptions(session.user)} />
 
           {/* Page Body */}
           {children}

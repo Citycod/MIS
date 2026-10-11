@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRef } from "react";
+import { FILTER_KEYS } from "@/lib/filters";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   BarChart3,
   Users,
@@ -14,7 +16,7 @@ import {
   Shield,
   Layers,
   LayoutDashboard,
-  Building2,
+  Building2, Menu, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/types/auth";
@@ -35,6 +37,10 @@ interface NavItem {
 
 export function Sidebar({ role, userName, userTitle, regionName }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const query = new URLSearchParams();
+  FILTER_KEYS.forEach(k => { const v = searchParams.get(k); if (v) query.set(k, v); });
 
   const roNavItems: NavItem[] = [
     { title: "My Dashboard", href: "/ro/dashboard", icon: LayoutDashboard },
@@ -63,18 +69,18 @@ export function Sidebar({ role, userName, userTitle, regionName }: SidebarProps)
 
   const navItems = role === "REGIONAL_MANAGER" ? regionalNavItems : roNavItems;
 
-  return (
-    <aside className="w-64 bg-[#333333] text-white flex flex-col min-h-screen shrink-0 border-r border-[#444444] shadow-md select-none">
+  const navigation = (
+    <aside className="w-60 bg-[#333333] text-white flex flex-col h-dvh shrink-0 border-r border-[#444444] shadow-md select-none" onClick={e => { if ((e.target as HTMLElement).closest("a")) dialog.current?.close(); }}>
       {/* Brand Header */}
       <div className="p-5 border-b border-[#444444] flex items-center gap-3 bg-[#2A2A2A]">
         <div className="w-9 h-9 rounded-lg bg-[#CF2E2E] flex items-center justify-center font-bold text-white shadow-sm">
-          PIS
+          MIS
         </div>
         <div>
           <h1 className="font-bold text-base tracking-tight text-white leading-tight">
-            PIS <span className="text-[#CF8D4D] text-xs font-normal ml-1">Enterprise</span>
+            MIS <span className="text-[#CF8D4D] text-xs font-normal ml-1">Enterprise</span>
           </h1>
-          <p className="text-[11px] text-[#A0A0A0]">Performance Information System</p>
+          <p className="text-[11px] text-[#A0A0A0]">Management Information System</p>
         </div>
       </div>
 
@@ -99,7 +105,8 @@ export function Sidebar({ role, userName, userTitle, regionName }: SidebarProps)
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={`${item.href}${query.size ? `?${query}` : ""}`}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150 group",
                 isActive
@@ -149,4 +156,13 @@ export function Sidebar({ role, userName, userTitle, regionName }: SidebarProps)
       </div>
     </aside>
   );
+  return <>
+    <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:p-3">Skip to content</a>
+    <div className="sticky top-0 hidden h-dvh lg:block">{navigation}</div>
+    <button className="fixed top-3 left-3 z-40 rounded-lg border border-[#E4E7EC] bg-white p-2.5 lg:hidden" aria-label="Open navigation" onClick={() => dialog.current?.showModal()}><Menu size={18} /></button>
+    <dialog ref={dialog} aria-label="Main navigation" className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none bg-[#333333] p-0 text-white backdrop:bg-black/40" onClick={e => { if (e.target === e.currentTarget) dialog.current?.close(); }}>
+      <button autoFocus aria-label="Close navigation" onClick={() => dialog.current?.close()} className="absolute top-2 right-2 z-10 rounded bg-[#333333] p-2"><X size={18} /></button>
+      {navigation}
+    </dialog>
+  </>;
 }

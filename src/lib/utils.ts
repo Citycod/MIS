@@ -34,15 +34,15 @@ export function formatCurrency(
  * Format percentage values with explicit sign option
  */
 export function formatPercent(
-  value: number | null | undefined,
+  value: number | string | null | undefined,
   includeSign: boolean = false
 ): string {
-  if (value === null || value === undefined || isNaN(value)) {
+  if (value === null || value === undefined || isNaN(Number(value))) {
     return "—";
   }
 
-  const sign = includeSign && value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(1)}%`;
+  const sign = includeSign && Number(value) > 0 ? "+" : "";
+  return `${sign}${Number(value).toFixed(2)}%`;
 }
 
 /**

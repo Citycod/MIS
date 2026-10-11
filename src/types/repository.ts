@@ -1,27 +1,43 @@
 import { AuthorizedScope } from "./auth";
 import { GlobalFilters } from "./filter";
 
+/** Decimal strings are view outputs; the UI formats them without calculating KPIs. */
+export type Decimal = string;
 export interface KpiSummary {
-  portfolioBalance: number;
-  portfolioTarget: number;
-  gapToTarget: number;
-  achievementPercentage: number;
-  monthlyPaceRequired: number;
+  portfolioBalance: Decimal | null;
+  portfolioTarget: Decimal | null;
+  gapToTarget: Decimal | null;
+  achievementPercentage: Decimal | null;
+  monthlyPaceRequired: Decimal | null;
   activeCustomersCount: number;
   totalDealsCount: number;
-  weightedYieldPercentage: number;
+  weightedYieldPercentage: Decimal | null;
+  monthlyNetMovement: Decimal | null;
+  mtdInflow: Decimal | null;
+  mtdOutflow: Decimal | null;
+  ytdInflow: Decimal | null;
+  ytdOutflow: Decimal | null;
+  ytdNetMovement: Decimal | null;
+  profitability: Decimal | null;
+  wacc: Decimal | null;
   asOfDate: string;
+  currency: string;
+  dataVersion: string;
+  metricDefinitionVersion: string;
+  availability: "available" | "no-data";
+  provisional: boolean;
+  paceBasis: string;
 }
 
 export interface MonthlyMovement {
-  month: string; // e.g. "2026-09"
-  openingPosition: number;
-  externalInflows: number;
-  outflowsLiquidations: number;
-  netMovement: number;
-  closingPosition: number;
-  targetPosition: number;
-  paceRequired: number;
+  month: string;
+  openingPosition: number | Decimal;
+  externalInflows: number | Decimal;
+  outflowsLiquidations: number | Decimal;
+  netMovement: number | Decimal;
+  closingPosition: number | Decimal;
+  targetPosition: number | Decimal | null;
+  paceRequired: number | Decimal | null;
 }
 
 export interface CustomerSummaryItem {
@@ -58,19 +74,23 @@ export interface RoPerformanceItem {
   regionId: string;
   regionName: string;
   branchName: string;
-  closingPosition: number;
-  targetAmount: number;
-  achievementPercentage: number;
-  gapAmount: number;
-  requiredPaceMonthly: number;
+  closingPosition: Decimal | null;
+  targetAmount: Decimal | null;
+  achievementPercentage: Decimal | null;
+  gapAmount: Decimal | null;
+  requiredPaceMonthly: Decimal | null;
+  monthlyNetMovement: Decimal | null;
+  wacc: Decimal | null;
+  profitability: Decimal | null;
   customerCount: number;
 }
 
 export interface ProductInvestmentMixItem {
   productCode: string;
   productName: string;
-  allocatedAmount: number;
-  percentageShare: number;
+  allocatedAmount: Decimal;
+  percentageShare: Decimal;
+  denominatorAmount: Decimal;
 }
 
 export interface PerformanceRepository {

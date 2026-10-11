@@ -1,135 +1,78 @@
+import "server-only";
 import { AuthorizedScope } from "@/types/auth";
 import { GlobalFilters } from "@/types/filter";
-import {
-  CustomerSummaryItem,
-  InvestmentDealItem,
-  KpiSummary,
-  MonthlyMovement,
-  PerformanceRepository,
-  ProductInvestmentMixItem,
-  RoPerformanceItem,
-} from "@/types/repository";
-import { MOCK_CUSTOMERS, MOCK_INVESTMENTS, MOCK_MOVEMENT_LEDGER } from "@/mocks/fixtures";
+import { KpiSummary, MonthlyMovement, PerformanceRepository, ProductInvestmentMixItem } from "@/types/repository";
+import { MOCK_CUSTOMERS, MOCK_INVESTMENTS, MOCK_REGIONS, MOCK_USERS } from "@/mocks/fixtures";
+import data from "@/mocks/dashboard-snapshots.json";
+import { normalizeAuthorizedScope, ScopeError } from "@/lib/server/security/scope";
 
+type Snapshot = { roIds: string[]; regionId: string; date: string; productCode: string; kpi: KpiSummary; movement: MonthlyMovement; mix: Record<"MTD" | "YTD", ProductInvestmentMixItem[]> };
+const snapshots: Snapshot[] = data as Snapshot[];
+
+// Revalidate every repository read. No totals, ratios, targets or financial formulas here.
+function authorize(scope: AuthorizedScope, filters: GlobalFilters) {
+  const user = MOCK_USERS[scope.userId];
+  if (!user || user.role !== scope.role) throw new ScopeError("Invalid principal.");
+  const effective = normalizeAuthorizedScope(user, filters).scope;
+  if (effective.effectiveRegionId !== scope.effectiveRegionId ||
+      effective.effectiveRoIds.some(id => !scope.effectiveRoIds.includes(id))) {
+    throw new ScopeError("Requested filters exceed the authorized scope.");
+  }
+  return effective;
+}
+function select(scope: AuthorizedScope, filters: GlobalFilters, date = filters.asOfDate) {
+  return snapshots.find(s => s.regionId === scope.effectiveRegionId && s.date === date &&
+    s.productCode === filters.productCode && s.roIds.slice().sort().join() === scope.effectiveRoIds.slice().sort().join());
+}
+function emptyKpis(date: string): KpiSummary {
+  return { portfolioBalance: null, portfolioTarget: null, gapToTarget: null, achievementPercentage: null,
+    monthlyPaceRequired: null, activeCustomersCount: 0, totalDealsCount: 0, weightedYieldPercentage: null,
+    monthlyNetMovement: null, mtdInflow: null, mtdOutflow: null, ytdInflow: null, ytdOutflow: null,
+    ytdNetMovement: null, profitability: null, wacc: null, asOfDate: date, currency: "NGN",
+    dataVersion: "synthetic-2026-v2", metricDefinitionVersion: "demo-unapproved-v2", availability: "no-data",
+    provisional: false, paceBasis: "No snapshot available." };
+}
 export class MockPerformanceRepository implements PerformanceRepository {
-  async getKpiSummary(scope: AuthorizedScope, filters: GlobalFilters): Promise<KpiSummary> {
-    const isRegionalAll = scope.role === "REGIONAL_MANAGER" && (filters.roId === "ALL" || !filters.roId);
-
-    if (isRegionalAll && scope.effectiveRegionId === "REG-01") {
-      // REG-01 Aggregate totals (RO-001 + RO-002)
-      return {
-        portfolioBalance: 1110000000,
-        portfolioTarget: 1700000000,
-        gapToTarget: 590000000,
-        achievementPercentage: 65.29,
-        monthlyPaceRequired: 147500000,
-        activeCustomersCount: 18,
-        totalDealsCount: 24,
-        weightedYieldPercentage: 16.85,
-        asOfDate: filters.asOfDate || "2026-09-30",
-      };
-    }
-
-    if (filters.roId === "RO-002") {
-      return {
-        portfolioBalance: 310000000,
-        portfolioTarget: 500000000,
-        gapToTarget: 190000000,
-        achievementPercentage: 62.0,
-        monthlyPaceRequired: 47500000,
-        activeCustomersCount: 6,
-        totalDealsCount: 8,
-        weightedYieldPercentage: 15.9,
-        asOfDate: filters.asOfDate || "2026-09-30",
-      };
-    }
-
-    // Default RO-001
-    return {
-      portfolioBalance: 800000000,
-      portfolioTarget: 1200000000,
-      gapToTarget: 400000000,
-      achievementPercentage: 66.67,
-      monthlyPaceRequired: 100000000,
-      activeCustomersCount: 12,
-      totalDealsCount: 16,
-      weightedYieldPercentage: 17.2,
-      asOfDate: filters.asOfDate || "2026-09-30",
-    };
+  async getKpiSummary(scope: AuthorizedScope, filters: GlobalFilters) {
+    return select(authorize(scope, filters), filters)?.kpi ?? emptyKpis(filters.asOfDate);
   }
-
-  async getMonthlyMovement(_scope: AuthorizedScope, _filters: GlobalFilters): Promise<MonthlyMovement[]> {
-    return MOCK_MOVEMENT_LEDGER;
+  async getMonthlyMovement(scope: AuthorizedScope, filters: GlobalFilters) {
+    const effective = authorize(scope, filters);
+    if (!select(effective, filters)) return [];
+    return snapshots.filter(s => s.regionId === effective.effectiveRegionId &&
+      s.roIds.slice().sort().join() === effective.effectiveRoIds.slice().sort().join() &&
+      s.productCode === filters.productCode && s.date.slice(0, 4) === filters.asOfDate.slice(0, 4) &&
+      s.date <= filters.asOfDate && (s.date === filters.asOfDate || (!s.kpi.provisional && s.date.slice(0, 7) < filters.asOfDate.slice(0, 7))) &&
+      (filters.periodMode === "YTD" || s.date.slice(0, 7) === filters.asOfDate.slice(0, 7)))
+      .sort((a, b) => a.date.localeCompare(b.date)).map(s => s.movement);
   }
-
-  async getCustomerList(scope: AuthorizedScope, _filters: GlobalFilters): Promise<CustomerSummaryItem[]> {
-    if (scope.role === "RO") {
-      return MOCK_CUSTOMERS.filter((c) => c.relationshipOfficerId === scope.userId || c.relationshipOfficerId === "RO-001");
-    }
-    return MOCK_CUSTOMERS;
+  async getCustomerList(scope: AuthorizedScope, filters: GlobalFilters) {
+    const effective = authorize(scope, filters);
+    const deals = await this.getInvestmentList(effective, filters);
+    return MOCK_CUSTOMERS.filter(c => effective.effectiveRoIds.includes(c.relationshipOfficerId) &&
+      (filters.productCode === "PROD-ALL" || deals.some(d => d.customerId === c.customerId)));
   }
-
-  async getInvestmentList(scope: AuthorizedScope, _filters: GlobalFilters): Promise<InvestmentDealItem[]> {
-    if (scope.role === "RO") {
-      return MOCK_INVESTMENTS.filter((inv) => inv.roId === scope.userId || inv.roId === "RO-001");
-    }
-    return MOCK_INVESTMENTS;
+  async getInvestmentList(scope: AuthorizedScope, filters: GlobalFilters) {
+    const effective = authorize(scope, filters);
+    return MOCK_INVESTMENTS.filter(i => effective.effectiveRoIds.includes(i.roId) &&
+      (filters.productCode === "PROD-ALL" || i.productCode === filters.productCode) && i.effectiveDate <= filters.asOfDate);
   }
-
-  async getRoPerformanceComparison(_scope: AuthorizedScope, _filters: GlobalFilters): Promise<RoPerformanceItem[]> {
-    return [
-      {
-        roId: "RO-001",
-        roName: "Adebayo Sterling",
-        regionId: "REG-01",
-        regionName: "Lagos Region",
-        branchName: "Victoria Island Branch",
-        closingPosition: 800000000,
-        targetAmount: 1200000000,
-        achievementPercentage: 66.67,
-        gapAmount: 400000000,
-        requiredPaceMonthly: 100000000,
-        customerCount: 12,
-      },
-      {
-        roId: "RO-002",
-        roName: "Chioma Okonkwo",
-        regionId: "REG-01",
-        regionName: "Lagos Region",
-        branchName: "Ikeja Branch",
-        closingPosition: 310000000,
-        targetAmount: 500000000,
-        achievementPercentage: 62.0,
-        gapAmount: 190000000,
-        requiredPaceMonthly: 47500000,
-        customerCount: 6,
-      },
-    ];
+  async getRoPerformanceComparison(scope: AuthorizedScope, filters: GlobalFilters) {
+    const effective = authorize(scope, filters);
+    if (effective.role !== "REGIONAL_MANAGER") throw new ScopeError("Regional manager access required.");
+    return effective.effectiveRoIds.flatMap(id => {
+      const snapshot = select({ ...effective, effectiveRoIds: [id] }, filters);
+      const user = Object.values(MOCK_USERS).find(u => u.roId === id);
+      if (!snapshot || !user) return [];
+      const k = snapshot.kpi;
+      return [{ roId: id, roName: user.name, regionId: user.regionId,
+        regionName: MOCK_REGIONS.find(r => r.id === user.regionId)!.name, branchName: user.branchName!,
+        closingPosition: k.portfolioBalance, targetAmount: k.portfolioTarget, achievementPercentage: k.achievementPercentage,
+        gapAmount: k.gapToTarget, requiredPaceMonthly: k.monthlyPaceRequired, monthlyNetMovement: k.monthlyNetMovement,
+        wacc: k.wacc, profitability: k.profitability, customerCount: k.activeCustomersCount }];
+    });
   }
-
-  async getProductInvestmentMix(scope: AuthorizedScope, filters: GlobalFilters): Promise<ProductInvestmentMixItem[]> {
-    // Investment Product Mix fixture from spec 12 (MTD/YTD composition)
-    if (filters.roId === "RO-002") {
-      return [
-        { productCode: "PROD-FIXED", productName: "Fixed Deposit", allocatedAmount: 20000000, percentageShare: 40.0 },
-        { productCode: "PROD-TREASURY", productName: "Treasury Bills", allocatedAmount: 20000000, percentageShare: 40.0 },
-        { productCode: "PROD-SUKUK", productName: "Sukuk Investments", allocatedAmount: 10000000, percentageShare: 20.0 },
-      ];
-    }
-
-    if (scope.role === "REGIONAL_MANAGER" && (filters.roId === "ALL" || !filters.roId)) {
-      return [
-        { productCode: "PROD-FIXED", productName: "Fixed Deposit", allocatedAmount: 90000000, percentageShare: 52.94 },
-        { productCode: "PROD-TREASURY", productName: "Treasury Bills", allocatedAmount: 50000000, percentageShare: 29.41 },
-        { productCode: "PROD-SUKUK", productName: "Sukuk Investments", allocatedAmount: 30000000, percentageShare: 17.65 },
-      ];
-    }
-
-    // Default RO-001
-    return [
-      { productCode: "PROD-FIXED", productName: "Fixed Deposit", allocatedAmount: 70000000, percentageShare: 58.33 },
-      { productCode: "PROD-TREASURY", productName: "Treasury Bills", allocatedAmount: 30000000, percentageShare: 25.0 },
-      { productCode: "PROD-SUKUK", productName: "Sukuk Investments", allocatedAmount: 20000000, percentageShare: 16.67 },
-    ];
+  async getProductInvestmentMix(scope: AuthorizedScope, filters: GlobalFilters) {
+    return select(authorize(scope, filters), filters)?.mix[filters.periodMode] ?? [];
   }
 }
