@@ -1,11 +1,18 @@
 import "server-only";
 import type { User } from "@/types/auth";
-import { MOCK_PRODUCTS, MOCK_REGIONS, MOCK_USERS } from "@/mocks/fixtures";
+import { getActiveDataCatalog } from "@/lib/server/repository/data-catalog";
+import { ROLE_VIEWS } from "@/lib/filters";
+import { normalizeAuthorizedScope } from "./scope";
 export function getFilterOptions(user: User) {
+  const catalog = getActiveDataCatalog();
+  const { scope } = normalizeAuthorizedScope(user);
   return {
-    regions: MOCK_REGIONS.filter(r => user.allowedRegionIds.includes(r.id)),
-    officers: Object.values(MOCK_USERS).filter(u => u.role === "RO" && user.allowedRoIds.includes(u.roId!) && user.allowedRegionIds.includes(u.regionId))
+    regions: catalog.regions.filter(r => r.id === scope.effectiveRegionId),
+    officers: Object.values(catalog.users).filter(u => u.role === "RO" && scope.allowedRoIds.includes(u.roId!) && u.regionId === scope.effectiveRegionId)
       .map(u => ({ id: u.roId!, name: u.name, regionId: u.regionId })),
-    products: MOCK_PRODUCTS,
+    products: catalog.products,
+    roleViews: ROLE_VIEWS,
+    defaultDate: catalog.defaultDate,
+    reportingDates: catalog.reportingDates,
   };
 }

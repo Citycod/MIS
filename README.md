@@ -28,3 +28,7 @@ Optional runtime `SESSION_SECRET` stabilizes signed **demo** sessions across pro
 - [Developer pack](doc/mis/PIS_RO_Developer_Pack/00_README.md)
 
 Review Phase 2 before proceeding to Phase 3.
+
+## Optional isolated v2.1 dataset
+
+The corrected 300-event synthetic dataset can be enabled as a separate development mode. Phase 2 remains the default, and the existing Superset databases and registrations are not changed. See [demo-v2 staging and runtime instructions](dev/demo-v2/README.md).

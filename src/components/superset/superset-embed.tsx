@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { EmbeddedDashboard } from "@superset-ui/embedded-sdk";
 import type { GlobalFilters } from "@/types/filter";
 
-export function SupersetEmbed({ dashboardKey, title, filters }: { dashboardKey: string; title: string; filters: GlobalFilters }) {
+export function SupersetEmbed({ dashboardKey, title, filters, fullDashboard = false }: { dashboardKey: string; title: string; filters: GlobalFilters; fullDashboard?: boolean }) {
   const mount = useRef<HTMLDivElement>(null);
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
@@ -39,7 +39,11 @@ export function SupersetEmbed({ dashboardKey, title, filters }: { dashboardKey: 
               throw failure;
             }
           },
-          dashboardUiConfig: { hideTitle: true, hideTab: true, hideChartControls: true, filters: { visible: false, expanded: false } },
+          dashboardUiConfig: {
+            hideTitle: true, hideTab: true, hideChartControls: true,
+            filters: { visible: false, expanded: false },
+            urlParams: { show_filters: "0", expand_filters: "0" },
+          },
         });
         if (controller.signal.aborted) { embedded.unmount(); return; }
         // Superset renders its own query loading, empty and error states inside the frame.
@@ -51,11 +55,12 @@ export function SupersetEmbed({ dashboardKey, title, filters }: { dashboardKey: 
     }
     void start();
     return () => { controller.abort(); embedded?.unmount(); };
-  }, [dashboardKey, title, serialized, attempt]);
-  return <div className="relative m-3" data-superset-state={error ? "error" : ready ? "ready" : "loading"}>
-    <div ref={mount} className={`h-[320px] w-full [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0 ${error ? "hidden" : ""}`} />
+  }, [dashboardKey, title, serialized, attempt, fullDashboard]);
+  const height = fullDashboard ? "h-[1280px] sm:h-[980px] lg:h-[700px]" : "h-[320px]";
+  return <div className={fullDashboard ? "relative" : "relative m-3"} data-superset-state={error ? "error" : ready ? "ready" : "loading"}>
+    <div ref={mount} className={`${height} w-full [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0 ${error ? "hidden" : ""}`} />
     {!ready && !error && <div role="status" className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/95 text-sm text-[#667085]">Loading synthetic analytics…</div>}
-    {error && <div role="alert" className="flex h-[320px] flex-col items-center justify-center gap-3 px-4 text-center text-sm text-[#667085]"><p>{error}</p><button className="primary-button" onClick={() => { setError(""); setReady(false); setAttempt(value => value + 1); }}>Retry chart</button></div>}
-    <p className="px-2 pt-1 text-[10px] text-[#667085]">Synthetic development data · Apache Superset</p>
+    {error && <div role="alert" className={`flex ${height} flex-col items-center justify-center gap-3 px-4 text-center text-sm text-[#737373]`}><p>{error}</p><button className="primary-button" onClick={() => { setError(""); setReady(false); setAttempt(value => value + 1); }}>Retry analytics</button></div>}
+    {!fullDashboard && <p className="px-2 pt-1 text-[10px] text-[#737373]">Synthetic development data · Apache Superset</p>}
   </div>;
 }

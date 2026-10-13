@@ -63,4 +63,39 @@ pnpm test:phase2
 
 The integration suite calls Superset using actual guest tokens, checks fixture parity and malicious scope changes, and captures desktop/tablet/mobile chart screenshots. Browser traces are disabled for this suite so token-bearing network requests are not persisted. See `doc/qa/superset/` for the recorded execution results and limitations.
 
+## Isolated demo-v2 resources
+
+The parallel MIS demo-v2 fixture uses a different read-only SQLite database,
+four datasets and six embedded dashboard UUIDs. It is provisioned separately,
+so running this command leaves the Phase 2 reporting database, dashboards,
+registrations, roles and RLS configuration intact:
+
+```sh
+bash dev/superset/provision_demo_v2.sh
+```
+
+To provision the separate SAMTL dashboard draft for both existing data modes, run:
+
+```bash
+bash dev/superset/provision_samtl_dashboard.sh
+```
+
+This adds `monthly_performance_review` to each existing registry. It does not replace or delete the Phase 2 or demo-v2 dashboards.
+
+### Synthetic CSV import dashboard
+
+Provision the separate, read-only Superset data source and dashboard once:
+
+```bash
+bash dev/superset/provision_csv_import.sh
+```
+
+Authenticated development users can then use **Import CSV** on the Performance Dashboard. MIS validates every row against the signed-in user’s region and RO entitlements, replaces only `.local/mis-csv-import/reporting.sqlite`, and switches the embedded view to the separately registered `csv_monthly_performance_review` dashboard. The upload never writes to CRM, the Phase 2 reporting database, or the demo-v2 database. Download the template from the import dialog for the required precomputed financial fields.
+
+The resulting `.local/superset/demo-v2-registry.json` is runtime-only and must
+not be committed. The Next.js guest-token broker selects it only when the
+explicit development-only `MIS_DATA_MODE=demo-v2` gate is active. Its legacy
+local-service switch is `PIS_SUPERSET_LOCAL_ENABLED`; this identifier is kept
+for compatibility and does not change the Management Information System name.
+
 Official references: [installation](https://superset.apache.org/admin-docs/installation/pypi/), [embedding](https://superset.apache.org/user-docs/6.1.0/using-superset/embedding/).

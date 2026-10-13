@@ -4,6 +4,7 @@ import {
   InvestmentDealItem,
   MonthlyMovement,
 } from "@/types/repository";
+import { MIS_PRODUCTS } from "@/lib/products";
 
 export interface RegionInfo {
   id: string;
@@ -20,7 +21,7 @@ export const MOCK_USERS: Record<string, User> = {
   "USR-RO-001": {
     id: "USR-RO-001",
     name: "Adebayo Sterling",
-    email: "adebayo.sterling@pis.bank",
+    email: "adebayo.sterling@mis.bank",
     role: "RO",
     roId: "RO-001",
     regionId: "REG-01",
@@ -32,7 +33,7 @@ export const MOCK_USERS: Record<string, User> = {
   "USR-RO-002": {
     id: "USR-RO-002",
     name: "Chioma Okonkwo",
-    email: "chioma.okonkwo@pis.bank",
+    email: "chioma.okonkwo@mis.bank",
     role: "RO",
     roId: "RO-002",
     regionId: "REG-01",
@@ -44,7 +45,7 @@ export const MOCK_USERS: Record<string, User> = {
   "USR-RO-003": {
     id: "USR-RO-003",
     name: "Emeka Nwosu",
-    email: "emeka.nwosu@pis.bank",
+    email: "emeka.nwosu@mis.bank",
     role: "RO",
     roId: "RO-003",
     regionId: "REG-02",
@@ -56,7 +57,7 @@ export const MOCK_USERS: Record<string, User> = {
   "USR-RM-001": {
     id: "USR-RM-001",
     name: "Babatunde Folorunsho",
-    email: "babatunde.folorunsho@pis.bank",
+    email: "babatunde.folorunsho@mis.bank",
     role: "REGIONAL_MANAGER",
     regionId: "REG-01",
     allowedRegionIds: ["REG-01"],
@@ -67,7 +68,7 @@ export const MOCK_USERS: Record<string, User> = {
   "USR-RM-002": {
     id: "USR-RM-002",
     name: "Aisha Bello",
-    email: "aisha.bello@pis.bank",
+    email: "aisha.bello@mis.bank",
     role: "REGIONAL_MANAGER",
     regionId: "REG-02",
     allowedRegionIds: ["REG-02"],
@@ -77,13 +78,7 @@ export const MOCK_USERS: Record<string, User> = {
   },
 };
 
-export const MOCK_PRODUCTS = [
-  { code: "PROD-ALL", name: "All Products" },
-  { code: "PROD-FIXED", name: "Fixed Deposit" },
-  { code: "PROD-TREASURY", name: "Treasury Bills" },
-  { code: "PROD-SUKUK", name: "Sukuk Investments" },
-  { code: "PROD-CALL", name: "Call Deposit Account" },
-];
+export const MOCK_PRODUCTS = [...MIS_PRODUCTS];
 
 export const MOCK_MOVEMENT_LEDGER: MonthlyMovement[] = [
   {

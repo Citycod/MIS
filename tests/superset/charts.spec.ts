@@ -13,6 +13,9 @@ async function token(page: Page, key: string, filters = defaultFilters) {
   expect(response.headers()["cache-control"]).toContain("no-store");
   return response.json();
 }
+function guestClaims(value: string) {
+  return JSON.parse(Buffer.from(value.split(".")[1], "base64url").toString("utf8")) as { resources: unknown; rls: unknown };
+}
 async function chartQuery(page: Page, key: string, guest: { token: string }, tamper?: (body: { queries: { filters: { col: string; op: string; val: string }[]; extras: { where: string; having: string } }[] }) => void) {
   const entry = registry.dashboards[key];
   const headers = { "X-GuestToken": guest.token };
@@ -83,6 +86,11 @@ test("Superset enforces RLS under query tampering, token edits and resource subs
   await login(page, "USR-RO-001");
   const key = "ro_overview:movement";
   const guest = await token(page, key);
+  const lensGuest = await token(page, key, { ...defaultFilters, roleView: "monthly-movement" } as typeof defaultFilters);
+  const unknownLensGuest = await token(page, key, { ...defaultFilters, roleView: "CFO" } as typeof defaultFilters);
+  expect(guestClaims(lensGuest.token).rls).toEqual(guestClaims(guest.token).rls);
+  expect(guestClaims(lensGuest.token).resources).toEqual(guestClaims(guest.token).resources);
+  expect(guestClaims(unknownLensGuest.token).rls).toEqual(guestClaims(guest.token).rls);
   const broad = await chartQuery(page, key, guest, body => {
     body.queries[0].filters = [];
     body.queries[0].extras = { where: "1=1", having: "" };
@@ -150,4 +158,22 @@ test("regional filters and drilldown synchronize the rendered chart requests", a
   const officers = await rows(page, "regional_overview:ro_position_target", abuja);
   expect(officers).toHaveLength(1);
   expect(officers[0].officer).toBe("Emeka Nwosu");
+});
+
+// Phase B regression; execution deferred at the user's request.
+test("Role View leaves signed authorization claims and chart records unchanged", async ({ page }) => {
+  await login(page, "USR-RO-001");
+  const key = "ro_overview:movement";
+  const baseline = await token(page, key);
+  const claims = (value: string) => {
+    const payload = JSON.parse(Buffer.from(value.split(".")[1], "base64url").toString());
+    return { user: payload.user, resources: payload.resources, rls_rules: payload.rls_rules };
+  };
+  const originalRows = await rows(page, key, defaultFilters);
+  for (const roleView of ["portfolio-overview", "investment-breakdown", "monthly-movement", "CFO", "__proto__"]) {
+    const filters = { ...defaultFilters, roleView };
+    const guest = await token(page, key, filters);
+    expect(claims(guest.token)).toEqual(claims(baseline.token));
+    expect(await rows(page, key, filters)).toEqual(originalRows);
+  }
 });

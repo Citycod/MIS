@@ -2,17 +2,17 @@
 
 @layer base {
   :root {
-    --brand-primary: #CF2E2E;
-    --brand-primary-hover: #AA2227;
-    --brand-deep: #741F24;
+    --brand-primary: #A51F27;
+    --brand-primary-hover: #861820;
+    --brand-deep: #651015;
     --brand-charcoal: #333333;
     --brand-gold: #CF8D4D;
-    --brand-tint: #FFF1EE;
-    --canvas: #F8F9FA;
+    --brand-tint: #FCF6F6;
+    --canvas: #FFFFFF;
     --surface: #FFFFFF;
-    --text-primary: #24252B;
-    --text-muted: #667085;
-    --border: #E4E7EC;
+    --text-primary: #252525;
+    --text-muted: #737373;
+    --border: #E5E5E5;
     --positive: #16794A;
     --negative: #B42318;
     --warning: #A96514;
@@ -27,6 +27,15 @@ body {
   font-feature-settings: 'tnum' on, 'lnum' on;
   -webkit-font-smoothing: antialiased;
 }
+
+.samtl-wordmark { color: var(--brand-deep); font-size: 1.7rem; font-weight: 800; letter-spacing: .08em; }
+.login-shell { min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: #fcf8f8; }
+.login-card { width: min(100%, 430px); border: 1px solid #f0e4e5; border-radius: 14px; background: white; padding: 40px; box-shadow: 0 16px 45px rgb(101 16 21 / 7%); }
+.login-card h1 { margin-top: 32px; font-size: 1.5rem; font-weight: 650; color: var(--text-primary); }
+.samtl-input { display: block; width: 100%; height: 48px; margin-top: 8px; padding: 0 14px; border: 1px solid var(--border); border-radius: 7px; background: white; color: var(--text-primary); font-size: 14px; }
+.samtl-input:focus { border-color: var(--brand-primary); outline: 2px solid rgb(165 31 39 / 12%); outline-offset: 0; }
+.samtl-primary-button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; border-radius: 7px; background: linear-gradient(120deg, #a51f27, #651015); padding: 10px 20px; color: white; font-size: 14px; font-weight: 650; }
+.samtl-primary-button:hover { background: linear-gradient(120deg, #8f1921, #520c11); }
 
 /* Custom Financial Table and Tabular Numbers */
 .tabular-nums {
@@ -50,11 +59,7 @@ body {
 }
 
 /* Active Nav Indicator Animation */
-.nav-item-active {
-  background-color: rgba(207, 46, 46, 0.12);
-  border-left: 4px solid #CF2E2E;
-  color: #FFFFFF;
-}
+.nav-item-active { background-color: var(--brand-primary); color: white; }
 
 /* Focus styles */
 :focus-visible {
@@ -67,9 +72,13 @@ body {
   .filter-input { display: block; width: 100%; min-width: 0; height: 40px; margin-top: 6px; padding: 8px 10px; border: 1px solid #cbd0d8; border-radius: 7px; background: white; color: var(--text-primary); font-size: 13px; font-weight: 400; }
   .filter-input:disabled { background: var(--canvas); color: #596170; }
   .primary-button, .secondary-button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 15px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .primary-button { background: var(--brand-primary); color: white; }
+  .primary-button { background: linear-gradient(120deg, var(--brand-primary), var(--brand-deep)); color: white; }
   .primary-button:hover { background: var(--brand-primary-hover); }
   .secondary-button { background: white; border: 1px solid var(--border); }
+  .samtl-filter-label { display: block; min-width: 0; font-size: 12px; font-weight: 500; color: #252525; }
+  .samtl-filter-input { display: block; width: 100%; min-width: 0; height: 46px; margin-top: 8px; padding: 0 13px; border: 1px solid #D8D8D8; border-radius: 7px; background: white; color: #252525; font-size: 13px; font-weight: 400; }
+  .samtl-filter-input:disabled { background: #FAFAFA; color: #555; opacity: 1; }
+  .samtl-apply-button { display: inline-flex; height: 46px; min-width: 104px; align-items: center; justify-content: center; border-radius: 7px; background: linear-gradient(120deg, #A51F27, #861820); padding: 0 22px; color: white; font-size: 14px; font-weight: 600; }
   button:disabled { cursor: wait; opacity: .65; }
   .panel { min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: white; box-shadow: 0 1px 2px #10182805; }
   .table-scroll { max-width: 100%; overflow-x: auto; border-radius: 0 0 12px 12px; }
@@ -79,6 +88,7 @@ body {
   .financial-table tbody tr:hover { background: #fffaf9; }
   .financial-table th:not(:first-child), .financial-table td:not(:first-child) { text-align: right; }
 }
+@media (max-width: 520px) { .login-card { padding: 28px 22px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
 .financial-table th:first-child,

@@ -1,5 +1,5 @@
 import { getCurrentSession } from "@/lib/server/security/auth";
-import { MockPerformanceRepository } from "@/lib/server/repository/mock-repository";
+import { getPerformanceRepository } from "@/lib/server/repository/repository-factory";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -11,7 +11,7 @@ interface InvestmentDetailPageProps {
 export default async function InvestmentDetailPage({ params }: InvestmentDetailPageProps) {
   const resolvedParams = await params;
   const session = await getCurrentSession();
-  const repo = new MockPerformanceRepository();
+  const repo = getPerformanceRepository();
   if (!session) return null;
 
   const investments = await repo.getInvestmentList(session.scope, {

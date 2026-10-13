@@ -1,183 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, ArrowRight } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { MOCK_USERS } from "@/mocks/fixtures";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [loadingUser, setLoadingUser] = useState<string | null>(null);
+  const personas = useMemo(() => Object.values(MOCK_USERS), []);
+  const [email, setEmail] = useState(personas[0]?.email ?? "");
+  const [password, setPassword] = useState("demo");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = async (userId: string) => {
-    setLoadingUser(userId);
+  async function signIn(event: React.FormEvent) {
+    event.preventDefault();
+    const user = personas.find(persona => persona.email.toLowerCase() === email.trim().toLowerCase());
+    if (!user || password !== "demo") {
+      setError("Use a listed development persona and the development password.");
+      return;
+    }
+    setLoading(true);
+    setError("");
     try {
-      const res = await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId: user.id }),
       });
-      const data = await res.json();
-      if (data.success) {
-        const user = MOCK_USERS[userId];
-        const targetRoute = user?.role === "REGIONAL_MANAGER" ? "/regional/dashboard" : "/ro/dashboard";
-        router.push(targetRoute);
-        router.refresh();
-      }
+      if (!response.ok) throw new Error("Sign in failed");
+      router.push(user.role === "REGIONAL_MANAGER" ? "/regional/dashboard" : "/ro/dashboard");
+      router.refresh();
+    } catch {
+      setError("Unable to sign in. Please try again.");
     } finally {
-      setLoadingUser(null);
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-4xl bg-white border border-[#E4E7EC] rounded-2xl shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[580px]">
-        {/* Left Branding Panel */}
-        <div className="md:col-span-5 bg-[#741F24] text-white p-8 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-[#CF2E2E]/20 rounded-full blur-2xl pointer-events-none" />
-
-          <div>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-[#CF2E2E] flex items-center justify-center font-bold text-white shadow-md text-lg">
-                MIS
-              </div>
-              <div>
-                <h1 className="font-extrabold text-xl tracking-tight leading-tight">MIS Enterprise</h1>
-                <p className="text-xs text-[#CF8D4D] font-medium">Management Information System</p>
-              </div>
-            </div>
-
-            <h2 className="text-2xl font-extrabold tracking-tight mb-3 text-white leading-snug">
-              Relationship Officer & Regional Analytics Portal
-            </h2>
-            <p className="text-xs text-[#E0E0E0] leading-relaxed mb-6">
-              Finance-grade monthly portfolio movement, target tracking, customer positions, and embedded Apache Superset reporting for Nigerian banking operations.
-            </p>
-          </div>
-
-          <div className="pt-6 border-t border-white/10 text-[11px] text-[#D0D0D0] space-y-1">
-            <p className="font-semibold text-white flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-[#CF8D4D]" />
-              Role-Based Access Control (RBAC)
-            </p>
-            <p>Direct CRM Database View Integration • Server-Side Security</p>
-          </div>
-        </div>
-
-        {/* Right Authentication Panel */}
-        <div className="md:col-span-7 p-8 flex flex-col justify-center">
-          <div className="mb-6">
-            <h3 className="text-xl font-extrabold text-[#24252B] tracking-tight">Sign In to Your Workspace</h3>
-            <p className="text-xs text-[#667085] mt-1">
-              Select a development persona below to test role-aware data access.
-            </p>
-          </div>
-
-          {/* Quick Persona Selectors */}
-          <div className="space-y-3 mb-6">
-            <p className="text-[11px] font-bold text-[#24252B] uppercase tracking-wider">
-              1-Click Demo Personas
-            </p>
-
-            <div className="grid grid-cols-1 gap-2.5">
-              {/* RO 1 */}
-              <button
-                onClick={() => handleLogin("USR-RO-001")}
-                disabled={loadingUser !== null}
-                className="w-full text-left p-3 rounded-xl border border-[#E4E7EC] hover:border-[#CF2E2E] hover:bg-[#FFF1EE] transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#F8F9FA] group-hover:bg-[#CF2E2E] group-hover:text-white text-[#24252B] flex items-center justify-center font-bold text-xs transition-colors">
-                    RO
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#24252B] group-hover:text-[#CF2E2E]">
-                      Adebayo Sterling
-                    </p>
-                    <p className="text-[11px] text-[#667085]">
-                      Senior RO • Victoria Island (Lagos Region)
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#667085] group-hover:text-[#CF2E2E] transition-transform group-hover:translate-x-1" />
+    <main className="login-shell">
+      <section className="login-card" aria-labelledby="login-heading">
+        <div className="samtl-wordmark" aria-label="SAMTL">SAMTL</div>
+        <h1 id="login-heading">Sign in to your Account</h1>
+        <form onSubmit={signIn} className="mt-8 space-y-5">
+          <label className="block text-sm font-medium text-[#252525]">
+            Email Address
+            <input className="samtl-input" type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required />
+          </label>
+          <label className="block text-sm font-medium text-[#252525]">
+            Password
+            <span className="relative mt-2 block">
+              <input className="samtl-input mt-0! pr-12!" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} required />
+              <button type="button" className="absolute inset-y-0 right-0 grid w-12 place-items-center text-[#737373]" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(value => !value)}>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
-
-              {/* RO 2 */}
-              <button
-                onClick={() => handleLogin("USR-RO-002")}
-                disabled={loadingUser !== null}
-                className="w-full text-left p-3 rounded-xl border border-[#E4E7EC] hover:border-[#CF2E2E] hover:bg-[#FFF1EE] transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#F8F9FA] group-hover:bg-[#CF2E2E] group-hover:text-white text-[#24252B] flex items-center justify-center font-bold text-xs transition-colors">
-                    RO
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#24252B] group-hover:text-[#CF2E2E]">
-                      Chioma Okonkwo
-                    </p>
-                    <p className="text-[11px] text-[#667085]">
-                      RO • Ikeja Branch (Lagos Region)
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#667085] group-hover:text-[#CF2E2E] transition-transform group-hover:translate-x-1" />
-              </button>
-
-              {/* Regional Manager 1 */}
-              <button
-                onClick={() => handleLogin("USR-RM-001")}
-                disabled={loadingUser !== null}
-                className="w-full text-left p-3 rounded-xl border border-[#CF8D4D]/40 bg-[#FFFDF9] hover:border-[#CF2E2E] hover:bg-[#FFF1EE] transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#CF8D4D]/10 text-[#CF8D4D] group-hover:bg-[#CF2E2E] group-hover:text-white flex items-center justify-center font-bold text-xs transition-colors">
-                    RM
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#24252B] group-hover:text-[#CF2E2E] flex items-center gap-1.5">
-                      Babatunde Folorunsho
-                      <span className="text-[10px] bg-[#CF8D4D]/20 text-[#A96514] font-bold px-1.5 py-0.2 rounded uppercase">
-                        Regional Manager
-                      </span>
-                    </p>
-                    <p className="text-[11px] text-[#667085]">
-                      Lagos Region (Controls RO-001 & RO-002)
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#667085] group-hover:text-[#CF2E2E] transition-transform group-hover:translate-x-1" />
-              </button>
-
-              {/* Regional Manager 2 */}
-              <button
-                onClick={() => handleLogin("USR-RM-002")}
-                disabled={loadingUser !== null}
-                className="w-full text-left p-3 rounded-xl border border-[#E4E7EC] hover:border-[#CF2E2E] hover:bg-[#FFF1EE] transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#F8F9FA] group-hover:bg-[#CF2E2E] group-hover:text-white text-[#24252B] flex items-center justify-center font-bold text-xs transition-colors">
-                    RM
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#24252B] group-hover:text-[#CF2E2E]">
-                      Aisha Bello
-                    </p>
-                    <p className="text-[11px] text-[#667085]">
-                      Regional Manager • Abuja Region
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#667085] group-hover:text-[#CF2E2E] transition-transform group-hover:translate-x-1" />
-              </button>
-            </div>
-          </div>
-
-          <div className="text-[11px] text-[#667085] text-center">
-            Development Mode • Authenticated via secure HTTP-only cookies
-          </div>
-        </div>
-      </div>
-    </div>
+            </span>
+          </label>
+          {error && <p role="alert" className="text-sm text-[#A51F27]">{error}</p>}
+          <button className="samtl-primary-button w-full" disabled={loading} type="submit">{loading ? "Signing in…" : "Continue"}</button>
+        </form>
+        <details className="mt-5 border-t border-[#E5E5E5] pt-4 text-sm text-[#737373]">
+          <summary className="cursor-pointer font-medium text-[#651015]">Development access</summary>
+          <p className="mt-2 text-xs leading-5">Select a test persona. The development password is <strong>demo</strong>.</p>
+          <select className="samtl-input mt-3" aria-label="Development persona" value={email} onChange={event => { setEmail(event.target.value); setPassword("demo"); setError(""); }}>
+            {personas.map(persona => <option key={persona.id} value={persona.email}>{persona.name} · {persona.role === "REGIONAL_MANAGER" ? "Regional Manager" : "Relationship Officer"}</option>)}
+          </select>
+        </details>
+      </section>
+    </main>
   );
 }

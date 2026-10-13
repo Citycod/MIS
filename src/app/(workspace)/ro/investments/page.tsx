@@ -1,12 +1,12 @@
 import { getCurrentSession } from "@/lib/server/security/auth";
-import { MockPerformanceRepository } from "@/lib/server/repository/mock-repository";
+import { getPerformanceRepository } from "@/lib/server/repository/repository-factory";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Briefcase } from "lucide-react";
 import Link from "next/link";
 
 export default async function RoInvestmentsPage() {
   const session = await getCurrentSession();
-  const repo = new MockPerformanceRepository();
+  const repo = getPerformanceRepository();
   if (!session) return null;
 
   const investments = await repo.getInvestmentList(session.scope, {
@@ -24,9 +24,7 @@ export default async function RoInvestmentsPage() {
           <Briefcase className="w-5 h-5 text-[#CF2E2E]" />
           Investments & Deals Portfolio
         </h1>
-        <p className="text-xs text-[#667085] mt-1">
-          Active Fixed Deposits, Treasury Bills, Sukuk, and Call Deposit placements.
-        </p>
+        <p className="text-xs text-[#667085] mt-1">Authorized SAMTL investment placements.</p>
       </div>
 
       <div className="bg-white border border-[#E4E7EC] rounded-xl p-5 shadow-xs">

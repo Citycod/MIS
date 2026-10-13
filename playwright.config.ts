@@ -15,6 +15,7 @@ export default defineConfig({
   webServer: {
     command: "pnpm start --port 3100 --hostname 127.0.0.1",
     url: "http://127.0.0.1:3100/login",
+    env: { MIS_CSV_IMPORT_ENABLED: "true" },
     reuseExistingServer: !process.env.CI,
     timeout: 60000,
   },

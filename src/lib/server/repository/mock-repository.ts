@@ -4,21 +4,15 @@ import { GlobalFilters } from "@/types/filter";
 import { KpiSummary, MonthlyMovement, PerformanceRepository, ProductInvestmentMixItem } from "@/types/repository";
 import { MOCK_CUSTOMERS, MOCK_INVESTMENTS, MOCK_REGIONS, MOCK_USERS } from "@/mocks/fixtures";
 import data from "@/mocks/dashboard-snapshots.json";
-import { normalizeAuthorizedScope, ScopeError } from "@/lib/server/security/scope";
+import { SAMTL_PRODUCT_CODES } from "@/lib/products";
+import { revalidateAuthorizedScope, ScopeError } from "@/lib/server/security/scope";
 
 type Snapshot = { roIds: string[]; regionId: string; date: string; productCode: string; kpi: KpiSummary; movement: MonthlyMovement; mix: Record<"MTD" | "YTD", ProductInvestmentMixItem[]> };
 const snapshots: Snapshot[] = data as Snapshot[];
 
 // Revalidate every repository read. No totals, ratios, targets or financial formulas here.
 function authorize(scope: AuthorizedScope, filters: GlobalFilters) {
-  const user = MOCK_USERS[scope.userId];
-  if (!user || user.role !== scope.role) throw new ScopeError("Invalid principal.");
-  const effective = normalizeAuthorizedScope(user, filters).scope;
-  if (effective.effectiveRegionId !== scope.effectiveRegionId ||
-      effective.effectiveRoIds.some(id => !scope.effectiveRoIds.includes(id))) {
-    throw new ScopeError("Requested filters exceed the authorized scope.");
-  }
-  return effective;
+  return revalidateAuthorizedScope(scope, filters);
 }
 function select(scope: AuthorizedScope, filters: GlobalFilters, date = filters.asOfDate) {
   return snapshots.find(s => s.regionId === scope.effectiveRegionId && s.date === date &&
@@ -50,11 +44,12 @@ export class MockPerformanceRepository implements PerformanceRepository {
     const effective = authorize(scope, filters);
     const deals = await this.getInvestmentList(effective, filters);
     return MOCK_CUSTOMERS.filter(c => effective.effectiveRoIds.includes(c.relationshipOfficerId) &&
-      (filters.productCode === "PROD-ALL" || deals.some(d => d.customerId === c.customerId)));
+      (filters.productCode === "PROD-ALL" || deals.some(d => d.customerId === c.customerId)))
+      .map(customer => ({ ...customer, activeInvestmentsCount: deals.filter(deal => deal.customerId === customer.customerId).length }));
   }
   async getInvestmentList(scope: AuthorizedScope, filters: GlobalFilters) {
     const effective = authorize(scope, filters);
-    return MOCK_INVESTMENTS.filter(i => effective.effectiveRoIds.includes(i.roId) &&
+    return MOCK_INVESTMENTS.filter(i => SAMTL_PRODUCT_CODES.has(i.productCode) && effective.effectiveRoIds.includes(i.roId) &&
       (filters.productCode === "PROD-ALL" || i.productCode === filters.productCode) && i.effectiveDate <= filters.asOfDate);
   }
   async getRoPerformanceComparison(scope: AuthorizedScope, filters: GlobalFilters) {

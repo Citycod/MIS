@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "NEXT_FONT_GOOGLE_MOCKED_RESPONSES=$PWD/dev/next-font-mock.cjs next build --webpack",
     "start": "next start",
-    "lint": "eslint",
-    "test:phase2": "playwright test"
+    "lint": "eslint src tests *.config.ts",
+    "test:phase2": "playwright test",
+    "test:demo-v2": "playwright test --config=playwright.demo-v2.config.ts"
   },
   "dependencies": {
     "@superset-ui/embedded-sdk": "^0.4.0",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

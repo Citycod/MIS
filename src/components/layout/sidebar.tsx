@@ -1,167 +1,54 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
-import { FILTER_KEYS } from "@/lib/filters";
-import { usePathname, useSearchParams } from "next/navigation";
-import {
-  BarChart3,
-  Users,
-  Briefcase,
-  TrendingUp,
-  Target,
-  CalendarCheck,
-  FileText,
-  UserCheck,
-  Shield,
-  Layers,
-  LayoutDashboard,
-  Building2, Menu, X,
-} from "lucide-react";
+import { useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { BarChart3, FolderOpen, Gauge, Menu, PanelLeftClose, PanelLeftOpen, TrendingUp, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { UserRole } from "@/types/auth";
+import type { UserRole } from "@/types/auth";
 
-interface SidebarProps {
-  role: UserRole;
-  userName: string;
-  userTitle: string;
-  regionName: string;
-}
+interface SidebarProps { role: UserRole }
 
-interface NavItem {
-  title: string;
-  href: string;
-  icon: React.ElementType;
-  badge?: string;
-}
-
-export function Sidebar({ role, userName, userTitle, regionName }: SidebarProps) {
+export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const dialog = useRef<HTMLDialogElement>(null);
-  const query = new URLSearchParams();
-  FILTER_KEYS.forEach(k => { const v = searchParams.get(k); if (v) query.set(k, v); });
-
-  const roNavItems: NavItem[] = [
-    { title: "My Dashboard", href: "/ro/dashboard", icon: LayoutDashboard },
-    { title: "Portfolio Movement", href: "/ro/portfolio-movement", icon: TrendingUp },
-    { title: "My Portfolio", href: "/ro/portfolio", icon: Layers },
-    { title: "My Customers", href: "/ro/customers", icon: Users },
-    { title: "Investments & Deals", href: "/ro/investments", icon: Briefcase },
-    { title: "Profitability Analysis", href: "/ro/profitability", icon: BarChart3 },
-    { title: "My Targets & Pace", href: "/ro/targets", icon: Target },
-    { title: "Maturities & Rollovers", href: "/ro/maturities", icon: CalendarCheck },
-    { title: "My Reports", href: "/ro/reports", icon: FileText },
+  const [collapsed, setCollapsed] = useState(false);
+  const base = role === "REGIONAL_MANAGER" ? "/regional" : "/ro";
+  const items = [
+    { title: "Dashboard", href: `${base}/dashboard`, icon: Gauge, matches: [`${base}/dashboard`, `${base}/relationship-officers`] },
+    { title: "Customer Records", href: `${base}/customers`, icon: FolderOpen, matches: [`${base}/customers`, `${base}/investments`, `${base}/portfolio`] },
+    { title: "Concentration Risk", href: `${base}/concentration-risk`, icon: BarChart3, matches: [`${base}/concentration-risk`] },
+    { title: "Profitability", href: `${base}/profitability`, icon: TrendingUp, matches: [`${base}/profitability`] },
   ];
-
-  const regionalNavItems: NavItem[] = [
-    { title: "Regional Dashboard", href: "/regional/dashboard", icon: Building2 },
-    { title: "Portfolio Movement", href: "/regional/portfolio-movement", icon: TrendingUp },
-    { title: "RO Performance", href: "/regional/relationship-officers", icon: UserCheck, badge: "Directory" },
-    { title: "Regional Portfolio", href: "/regional/portfolio", icon: Layers },
-    { title: "Customers Directory", href: "/regional/customers", icon: Users },
-    { title: "Investments & Deals", href: "/regional/investments", icon: Briefcase },
-    { title: "Profitability Analysis", href: "/regional/profitability", icon: BarChart3 },
-    { title: "Targets & Pace", href: "/regional/targets", icon: Target },
-    { title: "Maturities & Rollovers", href: "/regional/maturities", icon: CalendarCheck },
-    { title: "Regional Reports", href: "/regional/reports", icon: FileText },
-  ];
-
-  const navItems = role === "REGIONAL_MANAGER" ? regionalNavItems : roNavItems;
 
   const navigation = (
-    <aside className="w-60 bg-[#333333] text-white flex flex-col h-dvh shrink-0 border-r border-[#444444] shadow-md select-none" onClick={e => { if ((e.target as HTMLElement).closest("a")) dialog.current?.close(); }}>
-      {/* Brand Header */}
-      <div className="p-5 border-b border-[#444444] flex items-center gap-3 bg-[#2A2A2A]">
-        <div className="w-9 h-9 rounded-lg bg-[#CF2E2E] flex items-center justify-center font-bold text-white shadow-sm">
-          MIS
-        </div>
-        <div>
-          <h1 className="font-bold text-base tracking-tight text-white leading-tight">
-            MIS <span className="text-[#CF8D4D] text-xs font-normal ml-1">Enterprise</span>
-          </h1>
-          <p className="text-[11px] text-[#A0A0A0]">Management Information System</p>
-        </div>
+    <aside className={cn("flex h-dvh shrink-0 flex-col border-r border-[#F0DEDF] bg-[#FCF6F6] text-[#252525] transition-[width]", collapsed ? "w-[84px]" : "w-[248px]")} onClick={event => { if ((event.target as HTMLElement).closest("a")) dialog.current?.close(); }}>
+      <div className={cn("flex h-24 items-center border-b border-[#F0DEDF]", collapsed ? "justify-center px-3" : "justify-between px-6")}>
+        <div className={cn("samtl-wordmark text-lg!", collapsed && "sr-only")}>SAMTL</div>
+        <button className="hidden rounded-lg p-2 text-[#651015] hover:bg-white min-[1024px]:grid" onClick={() => setCollapsed(value => !value)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+          {collapsed ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
+        </button>
       </div>
-
-      {/* User Scope Badge */}
-      <div className="px-4 py-3 bg-[#262626] border-b border-[#3E3E3E] text-xs">
-        <div className="flex items-center gap-2 text-[#E0E0E0] font-medium">
-          <Shield className="w-3.5 h-3.5 text-[#CF2E2E]" />
-          <span>{role === "REGIONAL_MANAGER" ? "Regional Manager" : "Relationship Officer"}</span>
-        </div>
-        <p className="text-[11px] text-[#9E9E9E] mt-0.5 truncate">{regionName}</p>
-      </div>
-
-      {/* Navigation Links */}
-      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-        <div className="px-3 pb-2 text-[10px] font-semibold tracking-wider text-[#888888] uppercase">
-          Main Navigation
-        </div>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+      <nav className="flex-1 space-y-2 px-3 py-10" aria-label="Primary navigation">
+        {items.map(item => {
+          const active = item.matches.some(match => pathname === match || pathname.startsWith(`${match}/`));
           const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.href}
-              href={`${item.href}${query.size ? `?${query}` : ""}`}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150 group",
-                isActive
-                  ? "bg-[#CF2E2E] text-white shadow-sm font-semibold"
-                  : "text-[#D0D0D0] hover:bg-[#404040] hover:text-white"
-              )}
-            >
-              <Icon
-                className={cn(
-                  "w-4 h-4 shrink-0 transition-transform group-hover:scale-110",
-                  isActive ? "text-white" : "text-[#A0A0A0] group-hover:text-white"
-                )}
-              />
-              <span className="truncate flex-1">{item.title}</span>
-              {item.badge && (
-                <span
-                  className={cn(
-                    "text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider",
-                    isActive ? "bg-white text-[#CF2E2E]" : "bg-[#4A4A4A] text-[#CF8D4D]"
-                  )}
-                >
-                  {item.badge}
-                </span>
-              )}
-            </Link>
-          );
+          return <Link key={item.title} href={item.href} title={collapsed ? item.title : undefined} aria-current={active ? "page" : undefined} className={cn("flex min-h-12 items-center gap-4 rounded-md px-4 text-sm font-medium transition-colors", active ? "bg-[#A51F27] text-white" : "text-[#252525] hover:bg-white", collapsed && "justify-center px-0")}>
+            <Icon size={19} strokeWidth={1.8} className="shrink-0" />
+            {!collapsed && <span>{item.title}</span>}
+          </Link>;
         })}
       </nav>
-
-      {/* Footer / Profile Link */}
-      <div className="p-3 border-t border-[#444444] bg-[#2A2A2A]">
-        <Link
-          href="/profile"
-          className={cn(
-            "flex items-center gap-3 p-2 rounded-md hover:bg-[#3E3E3E] transition-colors",
-            pathname === "/profile" ? "bg-[#CF2E2E] text-white" : "text-[#E0E0E0]"
-          )}
-        >
-          <div className="w-8 h-8 rounded-full bg-[#741F24] border border-[#CF2E2E] flex items-center justify-center font-bold text-xs text-white">
-            {userName.substring(0, 2).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold truncate leading-tight text-white">{userName}</p>
-            <p className="text-[11px] text-[#A0A0A0] truncate">{userTitle}</p>
-          </div>
-        </Link>
-      </div>
+      {!collapsed && <div className="border-t border-[#F0DEDF] px-6 py-5"><p className="text-[11px] text-[#737373]">Authorized access only</p></div>}
     </aside>
   );
+
   return <>
-    <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:p-3">Skip to content</a>
-    <div className="sticky top-0 hidden h-dvh lg:block">{navigation}</div>
-    <button className="fixed top-3 left-3 z-40 rounded-lg border border-[#E4E7EC] bg-white p-2.5 lg:hidden" aria-label="Open navigation" onClick={() => dialog.current?.showModal()}><Menu size={18} /></button>
-    <dialog ref={dialog} aria-label="Main navigation" className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none bg-[#333333] p-0 text-white backdrop:bg-black/40" onClick={e => { if (e.target === e.currentTarget) dialog.current?.close(); }}>
-      <button autoFocus aria-label="Close navigation" onClick={() => dialog.current?.close()} className="absolute top-2 right-2 z-10 rounded bg-[#333333] p-2"><X size={18} /></button>
+    <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:bg-white focus:p-3">Skip to content</a>
+    <div className="sticky top-0 hidden h-dvh min-[1024px]:block">{navigation}</div>
+    <button className="fixed left-4 top-4 z-40 rounded-lg border border-[#E5E5E5] bg-white p-2.5 min-[1024px]:hidden" aria-label="Open navigation" onClick={() => dialog.current?.showModal()}><Menu size={19} /></button>
+    <dialog ref={dialog} aria-label="Main navigation" className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none bg-transparent p-0 backdrop:bg-black/35" onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }} onClose={() => document.querySelector<HTMLButtonElement>('[aria-label="Open navigation"]')?.focus()}>
+      <button autoFocus aria-label="Close navigation" className="absolute right-3 top-3 z-10 rounded-lg bg-white p-2 text-[#651015]" onClick={() => dialog.current?.close()}><X size={18} /></button>
       {navigation}
     </dialog>
   </>;

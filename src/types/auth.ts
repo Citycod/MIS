@@ -22,7 +22,7 @@ export interface AuthorizedScope {
   effectiveRegionId: string;
   effectiveRoIds: string[]; // Array of selected/authorized RO IDs ('ALL' represented as full allowed array)
   isLockedRo: boolean; // True for RO role (cannot select other ROs)
-  isLockedRegion: boolean; // True for RO role (cannot select other regions)
+  isLockedRegion: boolean; // RO and RM are locked to their trusted primary region
 }
 
 export interface Session {

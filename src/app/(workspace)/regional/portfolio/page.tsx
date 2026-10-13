@@ -1,11 +1,11 @@
 import { getCurrentSession } from "@/lib/server/security/auth";
-import { MockPerformanceRepository } from "@/lib/server/repository/mock-repository";
+import { getPerformanceRepository } from "@/lib/server/repository/repository-factory";
 import { formatCurrency } from "@/lib/utils";
 import { Layers } from "lucide-react";
 
 export default async function RegionalPortfolioPage() {
   const session = await getCurrentSession();
-  const repo = new MockPerformanceRepository();
+  const repo = getPerformanceRepository();
   if (!session) return null;
 
   const kpis = await repo.getKpiSummary(session.scope, {

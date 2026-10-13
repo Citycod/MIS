@@ -26,7 +26,7 @@ TALISMAN_CONFIG = {
         'connect-src': ["'self'"],
         'style-src': ["'self'", "'unsafe-inline'"],
         'script-src': ["'self'", "'strict-dynamic'"],
-        'frame-ancestors': ['http://127.0.0.1:3000', 'http://127.0.0.1:3100', 'http://localhost:3000', 'http://localhost:3100'],
+        'frame-ancestors': ['http://127.0.0.1:3000', 'http://127.0.0.1:3100', 'http://127.0.0.1:3200', 'http://localhost:3000', 'http://localhost:3100', 'http://localhost:3200'],
     },
     'content_security_policy_nonce_in': ['script-src'],
 }
@@ -42,5 +42,6 @@ WEBDRIVER_BASEURL = 'http://127.0.0.1:8088'
 SUPERSET_WEBSERVER_TIMEOUT = 60
 EXTRA_CATEGORICAL_COLOR_SCHEMES = [{
     'id': 'sterling_synthetic', 'description': 'Sterling synthetic development',
-    'label': 'Sterling', 'colors': ['#CF2E2E', '#333333', '#CF8D4D', '#8C1F28', '#8D939D'],
+    'label': 'SAMTL Burgundy',
+    'colors': ['#A51F27', '#C13F48', '#D96B73', '#E49A9F', '#F0C2C5', '#651015', '#8E3037'],
 }]
