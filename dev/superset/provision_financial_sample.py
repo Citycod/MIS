@@ -70,8 +70,9 @@ def pie(dataset_id, chart_id, groupby, kind, metric="Portfolio Position"):
 def bar(dataset_id, chart_id, metrics, kind, x_axis, horizontal=False):
     return {
         **common(dataset_id, chart_id, [adhoc("record_kind", kind), adhoc("mapping_status", "MAPPED_DEMO")]),
-        "viz_type": "dist_bar", "metrics": metrics, "groupby": [x_axis], "columns": [],
+        "viz_type": "echarts_timeseries_bar", "metrics": metrics, "groupby": [],
         "x_axis": x_axis, "orientation": "horizontal" if horizontal else "vertical",
+        "x_axis_sort": x_axis, "x_axis_sort_asc": True,
         "show_legend": True, "legendType": "plain", "legendOrientation": "bottom",
         "y_axis_format": ",.3s", "currency_format": {"symbol": "NGN", "symbolPosition": "prefix"},
         "show_value": False, "rich_tooltip": True,
@@ -219,10 +220,11 @@ def position_json(charts):
         for key in children:
             chart = next(chart for chart in charts if key == f"CHART-{chart.id}")
             is_table = chart.viz_type == "table"
+            width = 12 if len(children) == 1 else 4 if len(children) == 3 else 6
             payload[key] = {
                 "id": key, "type": "CHART", "children": [],
                 "parents": ["ROOT_ID", "GRID_ID", row_id],
-                "meta": {"chartId": chart.id, "width": 12 if len(children) == 1 else 6,
+                "meta": {"chartId": chart.id, "width": width,
                          "height": 42 if is_table else 16 if row_id == "ROW-KPI" else 34,
                          "sliceName": chart.slice_name},
             }

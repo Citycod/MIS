@@ -35,8 +35,10 @@ async function waitForFinancialDashboard(page) {
   const iframe = page.locator("iframe[title$='— synthetic data']").first();
   await iframe.waitFor({ state: "visible", timeout: 120_000 });
   const frame = iframe.contentFrame();
-  await frame.locator("canvas").first().waitFor({ state: "visible", timeout: 120_000 });
-  check(await frame.locator(".ant-alert-error").count() === 0, "Superset rendered an error alert.");
+  await frame.locator(".dashboard-component-chart-holder").first().waitFor({ state: "visible", timeout: 120_000 });
+  await page.waitForTimeout(5_000);
+  const alerts = await frame.locator(".ant-alert-error").allTextContents();
+  check(alerts.length === 0, `Superset rendered an error alert: ${alerts.join(" | ")}`);
   return frame;
 }
 
@@ -94,6 +96,26 @@ const browser = await chromium.launch({
   args: ["--no-sandbox"],
 });
 
+if (process.argv.includes("--mobile-only")) {
+  try {
+    const mobile = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await mobile.newPage();
+    await login(mobile, "USR-RO-001");
+    await page.goto(`${BASE}/ro/dashboard?source=financial-sample`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+    const frame = await waitForFinancialDashboard(page);
+    await frame.locator("canvas").first().waitFor({ state: "visible", timeout: 120_000 });
+    await page.waitForTimeout(30_000);
+    check(await frame.locator(".ant-alert-error").count() === 0, "Superset rendered an error alert on mobile.");
+    await verifyNavigation(page, true);
+    await page.screenshot({ path: `${OUTPUT}/mobile-sidebar.png`, fullPage: true });
+    console.log("Mobile screenshot captured after the dashboard settled.");
+    await mobile.close();
+  } finally {
+    await browser.close();
+  }
+  process.exit(0);
+}
+
 const results = { guestTokens: [], chartQueries: [], screenshots: [], nativeFilters: false, fullscreen: false, accessRestriction: false };
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
@@ -105,6 +127,7 @@ try {
   await login(context, "USR-RO-001");
 
   for (const [name, route] of PAGES) {
+    console.log(`Verifying ${name}...`);
     await page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded", timeout: 120_000 });
     if (name === "dashboard") await page.getByText("1,000-event Financial Sample · Synthetic Data", { exact: true }).waitFor({ state: "visible" });
     else await page.getByText("Synthetic financial sample", { exact: true }).waitFor({ state: "visible" });
@@ -135,6 +158,7 @@ try {
   check(denied?.ok(), "Cross-role denial page did not load.");
   await page.getByRole("heading", { name: "403 — Access Restricted" }).waitFor({ state: "visible" });
   results.accessRestriction = true;
+  console.log("Verified RO access restriction.");
   await context.close();
 
   const manager = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
@@ -143,6 +167,7 @@ try {
   await managerPage.goto(`${BASE}/regional/dashboard?source=financial-sample`, { waitUntil: "domcontentloaded", timeout: 120_000 });
   await verifyNavigation(managerPage);
   await waitForFinancialDashboard(managerPage);
+  console.log("Verified Regional Manager dashboard.");
   await manager.close();
 
   const mobile = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -151,6 +176,7 @@ try {
   await mobilePage.goto(`${BASE}/ro/dashboard?source=financial-sample`, { waitUntil: "domcontentloaded", timeout: 120_000 });
   await waitForFinancialDashboard(mobilePage);
   await verifyNavigation(mobilePage, true);
+  console.log("Verified mobile navigation.");
   const mobileShot = `${OUTPUT}/mobile-sidebar.png`;
   await mobilePage.screenshot({ path: mobileShot, fullPage: true });
   results.screenshots.push(mobileShot);
