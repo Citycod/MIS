@@ -1,7 +1,11 @@
 import { FileText, Download } from "lucide-react";
 import Link from "next/link";
+import { FinancialSampleSection } from "@/components/financial-sample/financial-sample-section";
+import type { SearchParams } from "@/lib/filters";
 
-export default function RoReportsPage() {
+export default async function RoReportsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const raw = await searchParams;
+  if (raw.source !== "built-in") return <FinancialSampleSection raw={raw} regional={false} allowExport dashboardKey="financial_sample_export" title="Financial Reporting Data" description="My scoped event and profitability detail with a server-authorized CSV export." />;
   const reports = [
     { key: "monthly-movement-ledger", title: "Monthly Portfolio Movement Ledger", format: "Excel / PDF" },
     { key: "customer-portfolio-summary", title: "Customer Portfolio Position Summary", format: "Excel" },

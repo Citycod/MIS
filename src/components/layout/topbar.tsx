@@ -5,8 +5,8 @@ import { LogOut, UserRound } from "lucide-react";
 import type { User } from "@/types/auth";
 
 const pageNames: Record<string, string> = {
-  dashboard: "Management Information System", customers: "Customer Records", "concentration-risk": "Concentration Risk",
-  profitability: "Profitability", investments: "Investment Details", targets: "Targets",
+  dashboard: "Management Information System", customers: "Customers", "concentration-risk": "Concentration Risk",
+  profitability: "Profitability", investments: "Investment", targets: "Target & Run Rate", reports: "Export Data",
   maturities: "Maturities", portfolio: "Portfolio", "relationship-officers": "Relationship Officers",
 };
 

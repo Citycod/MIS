@@ -76,9 +76,9 @@ def chart_params(dataset_id, chart_id, key):
         metric = {"annual_target": "Annual Target", "funds_mobilized": "Funds Mobilized", "completion": "Target Completion Rate"}[key]
         return {**common, "viz_type": "big_number_total", "metric": metric,
                 "header_font_size": 0.28, "subheader_font_size": 0.11,
-                "y_axis_format": ",.2f" if key != "completion" else ",.1f",
+                "y_axis_format": ",.2f" if key != "completion" else ",.1%",
                 "currency_format": {"symbol": "NGN", "symbolPosition": "prefix"} if key != "completion" else None,
-                "main_color": "#A51F27", "subheader": "NGN billions" if key != "completion" else "Pending approval",
+                "main_color": "#A51F27", "subheader": "NGN billions" if key != "completion" else "Percent of annual target · unavailable when blank",
                 "show_trend_line": False}
     if key == "mix":
         return {**common, "viz_type": "pie", "metric": "Eligible Investment", "groupby": ["product"],
@@ -128,7 +128,7 @@ def provision():
     metrics = {
         "Annual Target": ("MAX(annual_target) / 1000000000.0", ",.2f"),
         "Funds Mobilized": ("SUM(funds_mobilized) / 1000000000.0", ",.2f"),
-        "Target Completion Rate": ("MAX(completion_rate)", ",.1f"),
+        "Target Completion Rate": ("MAX(completion_rate) / 100.0", ",.1%"),
         "Eligible Investment": ("SUM(funds_mobilized)", ",.3s"),
     }
     for name, (expression, fmt) in metrics.items():

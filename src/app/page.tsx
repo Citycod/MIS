@@ -9,8 +9,8 @@ export default async function HomePage() {
   }
 
   if (session.user.role === "REGIONAL_MANAGER") {
-    redirect("/regional/dashboard");
+    redirect("/regional/dashboard?source=financial-sample");
   } else {
-    redirect("/ro/dashboard");
+    redirect("/ro/dashboard?source=financial-sample");
   }
 }

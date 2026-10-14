@@ -5,7 +5,8 @@ import type { User } from "@/types/auth";
 import type { GlobalFilters } from "@/types/filter";
 import { normalizeAuthorizedScope, ScopeError } from "@/lib/server/security/scope";
 import { getMisDataMode } from "@/lib/server/repository/data-mode";
-import { getProductName, isDemoV2SupportedAsOfDate } from "@/lib/server/repository/data-catalog";
+import { getProductDisplayName, getProductName, isDemoV2SupportedAsOfDate } from "@/lib/server/repository/data-catalog";
+import { mapFinancialSampleScope } from "@/lib/server/financial-sample/scope";
 
 const catalog = {
   "ro_overview:movement": "RO", "ro_overview:position": "RO",
@@ -13,6 +14,13 @@ const catalog = {
   "regional_overview:ro_position_target": "REGIONAL_MANAGER", investment_mix: "BOTH",
   monthly_performance_review: "BOTH",
   csv_monthly_performance_review: "BOTH",
+  financial_sample_overview: "BOTH",
+  financial_sample_investments: "BOTH",
+  financial_sample_customers: "BOTH",
+  financial_sample_concentration: "BOTH",
+  financial_sample_profitability: "BOTH",
+  financial_sample_targets: "BOTH",
+  financial_sample_export: "BOTH",
 } as const;
 type Registry = {
   domain: string;
@@ -71,6 +79,40 @@ function csvReviewRlsClause(user: User, scope: ReturnType<typeof normalizeAuthor
   return clauses.join(" AND ");
 }
 
+const FINANCIAL_SAMPLE_KEYS = new Set([
+  "financial_sample_overview",
+  "financial_sample_investments",
+  "financial_sample_customers",
+  "financial_sample_concentration",
+  "financial_sample_profitability",
+  "financial_sample_targets",
+  "financial_sample_export",
+]);
+
+function financialSampleRlsClause(
+  scope: ReturnType<typeof normalizeAuthorizedScope>["scope"],
+  filters: GlobalFilters,
+  mode: ReturnType<typeof getMisDataMode>,
+): string {
+  if (filters.asOfDate !== "2026-10-10") {
+    throw new ScopeError("The financial sample is available only at its configured 10 October 2026 cutoff.");
+  }
+  const { regionId, roIds } = mapFinancialSampleScope(scope, mode === "demo-v2");
+  const clauses = [
+    "data_classification = 'SYNTHETIC_DEMO_ONLY'",
+    `region_id = ${literal(regionId)}`,
+    `ro_id IN (${roIds.map(literal).join(", ")})`,
+    `reporting_cutoff = ${literal(filters.asOfDate)}`,
+    `reporting_date BETWEEN ${literal(filters.startDate!)} AND ${literal(filters.asOfDate)}`,
+  ];
+  if (filters.productCode !== "PROD-ALL") {
+    const product = getProductDisplayName(filters.productCode);
+    if (!product) throw new ScopeError("Product is outside the authorized reporting catalog.");
+    clauses.push(`product = ${literal(product)}`);
+  }
+  return clauses.join(" AND ");
+}
+
 async function supersetPost(domain: string, route: string, body: unknown, accessToken?: string, extraHeaders: Record<string, string> = {}) {
   const response = await fetch(`${domain}${route}`, {
     method: "POST", cache: "no-store", signal: AbortSignal.timeout(15000),
@@ -92,7 +134,9 @@ export async function createGuestToken(user: User, dashboardKey: string, rawFilt
   const runtime = path.join(process.cwd(), ".local", "superset");
   // The default registry remains entirely separate from the parallel demo-v2
   // UUIDs; no demo request can select a Phase 2 dashboard resource.
-  const registryName = dashboardKey === "csv_monthly_performance_review"
+  const registryName = FINANCIAL_SAMPLE_KEYS.has(dashboardKey)
+    ? "financial-sample-registry.json"
+    : dashboardKey === "csv_monthly_performance_review"
     ? "csv-import-registry.json"
     : mode === "demo-v2" ? "demo-v2-registry.json" : "registry.json";
   const registry: Registry = JSON.parse(await readFile(path.join(runtime, registryName), "utf8"));
@@ -103,7 +147,9 @@ export async function createGuestToken(user: User, dashboardKey: string, rawFilt
   if (domain.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(domain.hostname)) throw new Error("Local analytics must use loopback");
   // Scope and every visible filter are enforced in Superset SQL, including cached queries.
   // scope_key identifies a precomputed, exact set of authorized ROs, never an ALL wildcard.
-  const clause = dashboardKey === "csv_monthly_performance_review"
+  const clause = FINANCIAL_SAMPLE_KEYS.has(dashboardKey)
+    ? financialSampleRlsClause(scope, filters, mode)
+    : dashboardKey === "csv_monthly_performance_review"
     ? csvReviewRlsClause(user, scope, filters)
     : dashboardKey === "monthly_performance_review"
     ? monthlyReviewRlsClause(user, scope, filters, mode)

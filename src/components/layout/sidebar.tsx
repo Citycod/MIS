@@ -2,51 +2,123 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { usePathname } from "next/navigation";
-import { BarChart3, FolderOpen, Gauge, Menu, PanelLeftClose, PanelLeftOpen, TrendingUp, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  BarChart3,
+  ChartNoAxesCombined,
+  ClipboardList,
+  FolderKanban,
+  LayoutGrid,
+  LogOut,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Target,
+  TrendingUp,
+  UserRound,
+  UsersRound,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/auth";
 
 interface SidebarProps { role: UserRole }
+type NavigationItem = { title: string; href: string; icon: LucideIcon; matches: string[] };
 
 export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
   const [collapsed, setCollapsed] = useState(false);
   const base = role === "REGIONAL_MANAGER" ? "/regional" : "/ro";
-  const items = [
-    { title: "Dashboard", href: `${base}/dashboard`, icon: Gauge, matches: [`${base}/dashboard`, `${base}/relationship-officers`] },
-    { title: "Customer Records", href: `${base}/customers`, icon: FolderOpen, matches: [`${base}/customers`, `${base}/investments`, `${base}/portfolio`] },
-    { title: "Concentration Risk", href: `${base}/concentration-risk`, icon: BarChart3, matches: [`${base}/concentration-risk`] },
-    { title: "Profitability", href: `${base}/profitability`, icon: TrendingUp, matches: [`${base}/profitability`] },
+  const workspaceItems: NavigationItem[] = [
+    { title: "Dashboard", href: `${base}/dashboard?source=financial-sample`, icon: LayoutGrid, matches: [`${base}/dashboard`] },
+    { title: "Investment", href: `${base}/investments?source=financial-sample`, icon: FolderKanban, matches: [`${base}/investments`] },
+    { title: "Customers", href: `${base}/customers?source=financial-sample`, icon: UsersRound, matches: [`${base}/customers`] },
+    { title: "Concentration Risk", href: `${base}/concentration-risk?source=financial-sample`, icon: BarChart3, matches: [`${base}/concentration-risk`] },
+    { title: "Profitability", href: `${base}/profitability?source=financial-sample`, icon: TrendingUp, matches: [`${base}/profitability`] },
+    { title: "Target & Run Rate", href: `${base}/targets?source=financial-sample`, icon: Target, matches: [`${base}/targets`] },
+    { title: "Export Data", href: `${base}/reports?source=financial-sample`, icon: ClipboardList, matches: [`${base}/reports`] },
   ];
 
+  async function logout() {
+    const response = await fetch("/api/auth/logout", { method: "POST" });
+    if (response.ok) {
+      dialog.current?.close();
+      router.push("/login");
+      router.refresh();
+    }
+  }
+
+  function navigationLink(item: NavigationItem) {
+    const active = item.matches.some(match => pathname === match || pathname.startsWith(`${match}/`));
+    const Icon = item.icon;
+    return <Link
+      key={item.title}
+      href={item.href}
+      title={collapsed ? item.title : undefined}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex min-h-10 items-center gap-3 rounded-lg px-3 text-[13px] font-medium transition-colors",
+        active ? "bg-[#A51F27] text-white" : "text-[#252525] hover:bg-white",
+        collapsed && "justify-center px-0",
+      )}
+    >
+      <Icon size={17} strokeWidth={1.8} className="shrink-0" />
+      {!collapsed && <span className="truncate">{item.title}</span>}
+    </Link>;
+  }
+
   const navigation = (
-    <aside className={cn("flex h-dvh shrink-0 flex-col border-r border-[#F0DEDF] bg-[#FCF6F6] text-[#252525] transition-[width]", collapsed ? "w-[84px]" : "w-[248px]")} onClick={event => { if ((event.target as HTMLElement).closest("a")) dialog.current?.close(); }}>
-      <div className={cn("flex h-24 items-center border-b border-[#F0DEDF]", collapsed ? "justify-center px-3" : "justify-between px-6")}>
-        <div className={cn("samtl-wordmark text-lg!", collapsed && "sr-only")}>SAMTL</div>
-        <button className="hidden rounded-lg p-2 text-[#651015] hover:bg-white min-[1024px]:grid" onClick={() => setCollapsed(value => !value)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
-          {collapsed ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
+    <aside
+      className={cn("flex h-dvh shrink-0 flex-col overflow-hidden border-r border-[#F0DEDF] bg-[#FCF6F6] text-[#252525] transition-[width]", collapsed ? "w-[76px]" : "w-[240px]")}
+      onClick={event => { if ((event.target as HTMLElement).closest("a")) dialog.current?.close(); }}
+    >
+      <div className={cn("flex h-[84px] shrink-0 items-center border-b border-[#F0DEDF]", collapsed ? "flex-col justify-center gap-1 px-2" : "justify-between px-5")}>
+        <div className={cn("flex min-w-0 items-center gap-3", collapsed && "justify-center")}>
+          <ChartNoAxesCombined size={28} strokeWidth={2.3} className="shrink-0 text-[#A51F27]" aria-hidden="true" />
+          {!collapsed && <div className="min-w-0">
+            <p className="text-[22px] font-bold leading-none tracking-[0.03em] text-[#651015]">SAMTL</p>
+            <p className="mt-1 truncate text-[9px] text-[#737373]">Management Information System</p>
+          </div>}
+        </div>
+        <button
+          className="hidden rounded-md p-1.5 text-[#651015] hover:bg-white min-[1024px]:grid"
+          onClick={() => setCollapsed(value => !value)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
         </button>
       </div>
-      <nav className="flex-1 space-y-2 px-3 py-10" aria-label="Primary navigation">
-        {items.map(item => {
-          const active = item.matches.some(match => pathname === match || pathname.startsWith(`${match}/`));
-          const Icon = item.icon;
-          return <Link key={item.title} href={item.href} title={collapsed ? item.title : undefined} aria-current={active ? "page" : undefined} className={cn("flex min-h-12 items-center gap-4 rounded-md px-4 text-sm font-medium transition-colors", active ? "bg-[#A51F27] text-white" : "text-[#252525] hover:bg-white", collapsed && "justify-center px-0")}>
-            <Icon size={19} strokeWidth={1.8} className="shrink-0" />
-            {!collapsed && <span>{item.title}</span>}
-          </Link>;
-        })}
+
+      <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-5" aria-label="Primary navigation">
+        {!collapsed && <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#A51F27]">Workspace</p>}
+        <div className="space-y-1">{workspaceItems.map(navigationLink)}</div>
       </nav>
-      {!collapsed && <div className="border-t border-[#F0DEDF] px-6 py-5"><p className="text-[11px] text-[#737373]">Authorized access only</p></div>}
+
+      <div className="shrink-0 border-t border-[#F0DEDF] px-3 py-4">
+        {!collapsed && <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#A51F27]">My account</p>}
+        <div className="space-y-1">
+          {navigationLink({ title: "My Profile", href: "/profile", icon: UserRound, matches: ["/profile"] })}
+          <button
+            type="button"
+            title={collapsed ? "Log Out" : undefined}
+            className={cn("flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-[#252525] transition-colors hover:bg-white", collapsed && "justify-center px-0")}
+            onClick={logout}
+          >
+            <LogOut size={17} strokeWidth={1.8} className="shrink-0" />
+            {!collapsed && <span>Log Out</span>}
+          </button>
+        </div>
+      </div>
     </aside>
   );
 
   return <>
     <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:bg-white focus:p-3">Skip to content</a>
     <div className="sticky top-0 hidden h-dvh min-[1024px]:block">{navigation}</div>
-    <button className="fixed left-4 top-4 z-40 rounded-lg border border-[#E5E5E5] bg-white p-2.5 min-[1024px]:hidden" aria-label="Open navigation" onClick={() => dialog.current?.showModal()}><Menu size={19} /></button>
+    <button className="fixed left-4 top-4 z-40 rounded-lg border border-[#E5E5E5] bg-white p-2.5 text-[#651015] shadow-sm min-[1024px]:hidden" aria-label="Open navigation" onClick={() => dialog.current?.showModal()}><Menu size={19} /></button>
     <dialog ref={dialog} aria-label="Main navigation" className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none bg-transparent p-0 backdrop:bg-black/35" onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }} onClose={() => document.querySelector<HTMLButtonElement>('[aria-label="Open navigation"]')?.focus()}>
       <button autoFocus aria-label="Close navigation" className="absolute right-3 top-3 z-10 rounded-lg bg-white p-2 text-[#651015]" onClick={() => dialog.current?.close()}><X size={18} /></button>
       {navigation}

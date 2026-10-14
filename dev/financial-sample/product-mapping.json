@@ -1,0 +1,49 @@
+{
+  "mapping_version": "samtl-demo-v1",
+  "classification": "SYNTHETIC_DEMO_PRESENTATION_MAPPING",
+  "description": "User-directed synthetic presentation mapping to the current SAMTL product catalogue. This mapping is reversible and does not assert business equivalence.",
+  "mappings": [
+    {
+      "source_product": "Fixed Deposit",
+      "target_product_code": "PROD-SESA-WITHOUT-TAX",
+      "target_product_name": "SESA without TAX",
+      "status": "MAPPED_DEMO",
+      "note": "Synthetic presentation mapping; Finance and Product approval remains required."
+    },
+    {
+      "source_product": "Treasury Bills",
+      "target_product_code": "PROD-SESA-WITH-TAX",
+      "target_product_name": "SESA with TAX",
+      "status": "MAPPED_DEMO",
+      "note": "Synthetic presentation mapping; Finance and Product approval remains required."
+    },
+    {
+      "source_product": "Shyta",
+      "target_product_code": "PROD-SHYTA",
+      "target_product_name": "SHYTA",
+      "status": "MAPPED_DEMO",
+      "note": "Case-normalized catalogue match for synthetic reporting."
+    },
+    {
+      "source_product": "Commercial Paper",
+      "target_product_code": "PROD-SKET",
+      "target_product_name": "SKET",
+      "status": "MAPPED_DEMO",
+      "note": "Synthetic presentation mapping; Finance and Product approval remains required."
+    },
+    {
+      "source_product": "Sukuk Investments",
+      "target_product_code": "PROD-SKIT",
+      "target_product_name": "SKIT",
+      "status": "MAPPED_DEMO",
+      "note": "Synthetic presentation mapping; Finance and Product approval remains required."
+    },
+    {
+      "source_product": "Sira",
+      "target_product_code": "PROD-SIRA",
+      "target_product_name": "SIRA",
+      "status": "MAPPED_DEMO",
+      "note": "Case-normalized catalogue match for synthetic reporting."
+    }
+  ]
+}

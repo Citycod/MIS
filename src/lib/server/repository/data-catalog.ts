@@ -105,3 +105,7 @@ export function getProductName(productCode: string): string | null {
   const product = getActiveDataCatalog().products.find(item => item.code === productCode);
   return product?.sourceName ?? product?.name ?? null;
 }
+
+export function getProductDisplayName(productCode: string): string | null {
+  return getActiveDataCatalog().products.find(item => item.code === productCode)?.name ?? null;
+}

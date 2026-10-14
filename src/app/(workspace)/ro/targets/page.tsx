@@ -2,8 +2,12 @@ import { getCurrentSession } from "@/lib/server/security/auth";
 import { getPerformanceRepository } from "@/lib/server/repository/repository-factory";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { Target } from "lucide-react";
+import { FinancialSampleSection } from "@/components/financial-sample/financial-sample-section";
+import type { SearchParams } from "@/lib/filters";
 
-export default async function RoTargetsPage() {
+export default async function RoTargetsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const raw = await searchParams;
+  if (raw.source !== "built-in") return <FinancialSampleSection raw={raw} regional={false} dashboardKey="financial_sample_targets" title="Targets and Required Run Rate" description="My current position, assumed annual target, achievement, gap, and required monthly and daily pace." />;
   const session = await getCurrentSession();
   const repo = getPerformanceRepository();
   if (!session) return null;

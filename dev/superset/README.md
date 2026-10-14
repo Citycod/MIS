@@ -80,4 +80,17 @@ explicit development-only `MIS_DATA_MODE=demo-v2` gate is active. Its legacy
 local-service switch is `PIS_SUPERSET_LOCAL_ENABLED`; this identifier is kept
 for compatibility and does not change the Management Information System name.
 
+## Isolated 1,000-event financial sample
+
+The verified event sample has its own SQLite database, dataset, charts, embedded dashboard UUIDs, registry, and import migrations. It does not reuse the nine-column performance importer or replace Phase 2, demo-v2, or CSV registrations.
+
+```sh
+python3 dev/financial-sample/import_sample.py --cutoff 2026-10-10
+bash dev/superset/provision_financial_sample.sh
+```
+
+The runtime registry is `.local/superset/financial-sample-registry.json`. The guest-token broker selects it only for `financial_sample_*` dashboard keys and applies signed region, officer, date, and product scope. The native filter panel starts collapsed. Chart controls stay available on these dashboards so an authorized user can open a detailed chart while the guest token and dataset RLS remain active.
+
+The SAMTL product catalogue is applied through `dev/financial-sample/product-mapping.json`. Source product values remain on every event and in the detail table. `SAMTL REIT` is present in the catalogue but has no source row in this sample.
+
 Official references: [installation](https://superset.apache.org/admin-docs/installation/pypi/), [embedding](https://superset.apache.org/user-docs/6.1.0/using-superset/embedding/).

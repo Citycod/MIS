@@ -2,8 +2,12 @@ import { getCurrentSession } from "@/lib/server/security/auth";
 import { getPerformanceRepository } from "@/lib/server/repository/repository-factory";
 import { formatCurrency } from "@/lib/utils";
 import { Briefcase } from "lucide-react";
+import { FinancialSampleSection } from "@/components/financial-sample/financial-sample-section";
+import type { SearchParams } from "@/lib/filters";
 
-export default async function RegionalInvestmentsPage() {
+export default async function RegionalInvestmentsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const raw = await searchParams;
+  if (raw.source !== "built-in") return <FinancialSampleSection raw={raw} regional dashboardKey="financial_sample_investments" title="Investment Analysis" description="Investment allocation, monthly movement, inflow and outflow, and scoped event-level detail." />;
   const session = await getCurrentSession();
   const repo = getPerformanceRepository();
   if (!session) return null;

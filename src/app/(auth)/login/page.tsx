@@ -30,7 +30,7 @@ export default function LoginPage() {
         body: JSON.stringify({ userId: user.id }),
       });
       if (!response.ok) throw new Error("Sign in failed");
-      router.push(user.role === "REGIONAL_MANAGER" ? "/regional/dashboard" : "/ro/dashboard");
+      router.push(user.role === "REGIONAL_MANAGER" ? "/regional/dashboard?source=financial-sample" : "/ro/dashboard?source=financial-sample");
       router.refresh();
     } catch {
       setError("Unable to sign in. Please try again.");

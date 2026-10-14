@@ -54,21 +54,38 @@ function parseCells(input: string): string[][] {
   return rows;
 }
 
-function amount(value: string, label: string, rowNumber: number): number {
-  if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(value)) throw new CsvImportError(`${label} must be a non-negative number on row ${rowNumber}.`);
-  const parsed = Number(value);
+function amount(value: string, label: string, rowNumber: number, percentage = false): number {
+  let normalized = value.trim()
+    .replace(/^NGN\s*/i, "")
+    .replace(/^₦\s*/, "")
+    .replace(/[\s,]/g, "");
+  if (percentage) normalized = normalized.replace(/%$/, "");
+  if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(normalized)) throw new CsvImportError(`${label} must be a non-negative number on row ${rowNumber}.`);
+  const parsed = Number(normalized);
   if (!Number.isFinite(parsed) || parsed > 1_000_000_000_000_000) throw new CsvImportError(`${label} is outside the supported range on row ${rowNumber}.`);
   return parsed;
+}
+
+function normalizeHeader(value: string) {
+  return value.trim().toLowerCase().replace(/[\s-]+/g, "_");
 }
 
 export function parseAuthorizedCsv(input: string, user: User): CsvRow[] {
   const records = parseCells(input.replace(/^\uFEFF/, ""));
   if (records.length < 2) throw new CsvImportError("The CSV must contain a header and at least one data row.");
   if (records.length > 10_001) throw new CsvImportError("A development import may contain at most 10,000 rows.");
-  const headers = records[0];
-  if (headers.length !== CSV_HEADERS.length || CSV_HEADERS.some((header, index) => headers[index] !== header)) {
-    throw new CsvImportError(`Use these columns in order: ${CSV_HEADERS.join(", ")}.`);
+  const headers = records[0].map(normalizeHeader);
+  const duplicates = headers.filter((header, index) => header && headers.indexOf(header) !== index);
+  if (duplicates.length) throw new CsvImportError(`The CSV header contains duplicate columns: ${[...new Set(duplicates)].join(", ")}.`);
+  const missing = CSV_HEADERS.filter(header => !headers.includes(header));
+  if (missing.length) {
+    const eventColumns = ["event_id", "event_date", "reporting_month", "event_type", "transaction_amount_ngn"];
+    if (eventColumns.some(header => headers.includes(header))) {
+      throw new CsvImportError("This is an investment-event CSV. Dashboard import needs summarized performance rows with annual target and funds mobilized. Download and use the CSV template shown in this dialog.");
+    }
+    throw new CsvImportError(`The CSV header is missing: ${missing.join(", ")}. Download the CSV template and keep its nine dashboard columns.`);
   }
+  const column = Object.fromEntries(CSV_HEADERS.map(header => [header, headers.indexOf(header)])) as Record<typeof CSV_HEADERS[number], number>;
   const catalog = getActiveDataCatalog();
   const products = new Map<string, string>();
   for (const product of catalog.products.filter(item => item.code !== "PROD-ALL")) {
@@ -80,8 +97,14 @@ export function parseAuthorizedCsv(input: string, user: User): CsvRow[] {
   const officers = new Map(Object.values(catalog.users).filter(item => item.role === "RO" && item.roId).map(item => [item.roId!, item]));
   return records.slice(1).map((values, recordIndex) => {
     const rowNumber = recordIndex + 2;
-    if (values.length !== CSV_HEADERS.length) throw new CsvImportError(`Row ${rowNumber} has ${values.length} columns instead of ${CSV_HEADERS.length}.`);
-    const [reportingDate, regionId, , roId, , productValue, targetValue, fundsValue, completionValue] = values;
+    if (values.length < headers.length) values = [...values, ...Array(headers.length - values.length).fill("")];
+    const reportingDate = values[column.reporting_date];
+    const regionId = values[column.region_id];
+    const roId = values[column.ro_id];
+    const productValue = values[column.product];
+    const targetValue = values[column.annual_target_ngn];
+    const fundsValue = values[column.funds_mobilized_ngn];
+    const completionValue = values[column.target_completion_pct];
     if (!validDate(reportingDate)) throw new CsvImportError(`reporting_date is invalid on row ${rowNumber}.`);
     const region = regions.get(regionId);
     if (!region || !user.allowedRegionIds.includes(regionId) || regionId !== user.regionId) throw new CsvImportError(`region_id is outside your authorized scope on row ${rowNumber}.`);
@@ -91,7 +114,7 @@ export function parseAuthorizedCsv(input: string, user: User): CsvRow[] {
     }
     const product = products.get(productValue.toLowerCase());
     if (!product) throw new CsvImportError(`product is not in the approved development catalog on row ${rowNumber}.`);
-    const completion = completionValue === "" ? null : amount(completionValue, "target_completion_pct", rowNumber);
+    const completion = completionValue === "" ? null : amount(completionValue, "target_completion_pct", rowNumber, true);
     if (completion !== null && completion > 100) throw new CsvImportError(`target_completion_pct must be between 0 and 100 on row ${rowNumber}.`);
     return {
       reportingDate, regionId, regionName: region.name, roId, roName: officer.name, product,
@@ -166,7 +189,13 @@ export async function replaceCsvReportingDatabase(rows: CsvRow[]) {
   try { await rename(temporary, target); }
   catch (error) { await rm(temporary, { force: true }); throw error; }
   const dates = rows.map(row => row.reportingDate).sort();
-  return { rows: rows.length, startDate: dates[0], endDate: dates.at(-1)!, database: "MIS CSV Import Synthetic Development" };
+  return {
+    rows: rows.length,
+    targetCompletionRows: rows.filter(row => row.targetCompletion !== null).length,
+    startDate: dates[0],
+    endDate: dates.at(-1)!,
+    database: "MIS CSV Import Synthetic Development",
+  };
 }
 
 export function csvTemplate(user: User): string {
@@ -174,5 +203,5 @@ export function csvTemplate(user: User): string {
   const region = catalog.regions.find(item => item.id === user.regionId)!;
   const officer = Object.values(catalog.users).find(item => item.role === "RO" && item.roId === user.allowedRoIds[0])!;
   const product = catalog.products.find(item => item.code !== "PROD-ALL")!;
-  return `${CSV_HEADERS.join(",")}\n2026-01-31,${region.id},${region.name},${officer.roId},${officer.name},${product.name},1200000000,50000000,\n`;
+  return `${CSV_HEADERS.join(",")}\n2026-01-31,${region.id},${region.name},${officer.roId},${officer.name},${product.name},1200000000,50000000,4.17\n`;
 }

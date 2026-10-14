@@ -162,10 +162,10 @@ def chart_params(dataset_id, chart_id, key):
         params = {**common, "viz_type": "big_number_total", "metric": metric,
                   "adhoc_filters": row_filter("trend" if key == "fund_mobilized" else "kpi"),
                   "header_font_size": 0.28, "subheader_font_size": 0.11,
-                  "y_axis_format": ",.2f" if key != "completion" else ",.1f",
+                  "y_axis_format": ",.2f" if key != "completion" else ",.1%",
                   "currency_format": {"symbol": "NGN", "symbolPosition": "prefix"} if key != "completion" else None,
                   "main_color": "#A51F27",
-                  "subheader": "NGN billions" if key != "completion" else "Pending approval",
+                  "subheader": "NGN billions" if key != "completion" else "Percent of annual target · unavailable where not defined",
                   "show_trend_line": False}
     elif key == "mix":
         params = {**common, "viz_type": "pie", "metric": "Eligible Investment", "groupby": ["product"],
@@ -228,7 +228,7 @@ def provision(mode):
     metrics = {
         "Annual Target": ("MAX(annual_target) / 1000000000.0", ",.2f"),
         "Funds Mobilized": ("SUM(external_inflow) / 1000000000.0", ",.2f"),
-        "Target Completion Rate": ("MAX(completion_rate)", ",.1f"),
+        "Target Completion Rate": ("MAX(completion_rate) / 100.0", ",.1%"),
         "Eligible Investment": ("SUM(external_inflow)", ",.3s"),
     }
     for name, (expression, fmt) in metrics.items():

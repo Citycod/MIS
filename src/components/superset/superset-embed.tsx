@@ -10,6 +10,7 @@ export function SupersetEmbed({ dashboardKey, title, filters, fullDashboard = fa
   const [ready, setReady] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const serialized = JSON.stringify(filters);
+  const financialSample = dashboardKey.startsWith("financial_sample_");
   useEffect(() => {
     const controller = new AbortController();
     let embedded: EmbeddedDashboard | undefined;
@@ -40,9 +41,9 @@ export function SupersetEmbed({ dashboardKey, title, filters, fullDashboard = fa
             }
           },
           dashboardUiConfig: {
-            hideTitle: true, hideTab: true, hideChartControls: true,
-            filters: { visible: false, expanded: false },
-            urlParams: { show_filters: "0", expand_filters: "0" },
+            hideTitle: true, hideTab: true, hideChartControls: !financialSample,
+            filters: { visible: financialSample, expanded: false },
+            urlParams: { show_filters: financialSample ? "1" : "0", expand_filters: "0" },
           },
         });
         if (controller.signal.aborted) { embedded.unmount(); return; }
@@ -55,8 +56,12 @@ export function SupersetEmbed({ dashboardKey, title, filters, fullDashboard = fa
     }
     void start();
     return () => { controller.abort(); embedded?.unmount(); };
-  }, [dashboardKey, title, serialized, attempt, fullDashboard]);
-  const height = fullDashboard ? "h-[1280px] sm:h-[980px] lg:h-[700px]" : "h-[320px]";
+  }, [dashboardKey, title, serialized, attempt, fullDashboard, financialSample]);
+  const height = financialSample
+    ? dashboardKey === "financial_sample_overview"
+      ? "h-[2200px] sm:h-[1800px] lg:h-[1450px]"
+      : "h-[1500px] sm:h-[1200px] lg:h-[980px]"
+    : fullDashboard ? "h-[1280px] sm:h-[980px] lg:h-[700px]" : "h-[320px]";
   return <div className={fullDashboard ? "relative" : "relative m-3"} data-superset-state={error ? "error" : ready ? "ready" : "loading"}>
     <div ref={mount} className={`${height} w-full [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0 ${error ? "hidden" : ""}`} />
     {!ready && !error && <div role="status" className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/95 text-sm text-[#667085]">Loading synthetic analytics…</div>}
