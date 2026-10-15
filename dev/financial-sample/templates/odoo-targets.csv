@@ -1,0 +1,2 @@
+source_target_id,reporting_year,target_period_start,target_period_end,team_id,ro_id,target_type,target_amount_ngn,currency,effective_date,source_version
+ODOO-TGT-DEMO-001,2026,2026-01-01,2026-12-31,LAG,RO-LAG-01,NEW_TARGET_ANNUAL,1200000000,NGN,2026-01-01,odoo-export-version

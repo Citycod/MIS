@@ -4,9 +4,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Download, ExternalLink } from "lucide-react";
 import { SupersetEmbed } from "@/components/superset/superset-embed";
+import { MprExportPanel } from "@/components/reports/mpr-export-panel";
 import { filterQuery, type SearchParams } from "@/lib/filters";
 import { getCurrentSession } from "@/lib/server/security/auth";
 import { normalizeAuthorizedScope } from "@/lib/server/security/scope";
+import { getActiveDataCatalog } from "@/lib/server/repository/data-catalog";
 import type { GlobalFilters } from "@/types/filter";
 
 type DashboardKey =
@@ -28,6 +30,7 @@ export async function FinancialSampleSection({
   description,
   regional,
   allowExport = false,
+  showMpr = false,
 }: {
   raw: SearchParams;
   dashboardKey: DashboardKey;
@@ -35,6 +38,7 @@ export async function FinancialSampleSection({
   description: string;
   regional: boolean;
   allowExport?: boolean;
+  showMpr?: boolean;
 }) {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
@@ -52,6 +56,9 @@ export async function FinancialSampleSection({
   const query = new URLSearchParams(filterQuery(filters));
   query.set("source", "financial-sample");
   const exportQuery = new URLSearchParams(filterQuery(filters));
+  const teamName = getActiveDataCatalog().regions.find(region => region.id === session.scope.effectiveRegionId)?.name
+    ?? session.user.branchName
+    ?? session.scope.effectiveRegionId;
 
   return <div className="mx-auto max-w-[1500px] space-y-5">
     <div className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-[#E8E1E2] bg-white p-5 shadow-[0_1px_3px_rgba(101,16,21,0.05)]">
@@ -68,6 +75,13 @@ export async function FinancialSampleSection({
         {allowExport && <a className="samtl-primary-button gap-2" href={`/api/financial-sample/export?${exportQuery}`}><Download size={14} /> Download scoped CSV</a>}
       </div>
     </div>
+
+    {showMpr && <MprExportPanel
+      teamId={session.scope.effectiveRegionId}
+      teamName={teamName}
+      cutoff="2026-10-10"
+      canImport={session.user.role === "REGIONAL_MANAGER"}
+    />}
 
     {dashboardKey === "financial_sample_profitability" && <p className="rounded-lg border border-[#E8D5D7] bg-[#FCF6F6] px-4 py-3 text-xs leading-5 text-[#651015]">WHT, OPEX, management margin and final profitability are illustrative demo calculations. Deal margin remains separate. Calculation base meaning and production policies still require Finance approval.</p>}
 

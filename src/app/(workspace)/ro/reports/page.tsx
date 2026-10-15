@@ -5,7 +5,7 @@ import type { SearchParams } from "@/lib/filters";
 
 export default async function RoReportsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const raw = await searchParams;
-  if (raw.source !== "built-in") return <FinancialSampleSection raw={raw} regional={false} allowExport dashboardKey="financial_sample_export" title="Financial Reporting Data" description="My scoped event and profitability detail with a server-authorized CSV export." />;
+  if (raw.source !== "built-in") return <FinancialSampleSection raw={raw} regional={false} allowExport showMpr dashboardKey="financial_sample_export" title="Reports and Export Data" description="Generate a scoped Monthly Performance Review PowerPoint or download my authorized financial event data as CSV." />;
   const reports = [
     { key: "monthly-movement-ledger", title: "Monthly Portfolio Movement Ledger", format: "Excel / PDF" },
     { key: "customer-portfolio-summary", title: "Customer Portfolio Position Summary", format: "Excel" },

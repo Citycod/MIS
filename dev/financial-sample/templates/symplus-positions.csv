@@ -1,0 +1,2 @@
+source_position_id,position_as_of_date,team_id,ro_id,investment_account_id,product,currency,balance_sheet_position_ngn,source_version
+SYM-POS-DEMO-001,2026-10-10,LAG,RO-LAG-01,ACCOUNT-REFERENCE,SESA without TAX,NGN,350000000,symplus-export-version
