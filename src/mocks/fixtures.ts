@@ -20,8 +20,8 @@ export const MOCK_REGIONS: RegionInfo[] = [
 export const MOCK_USERS: Record<string, User> = {
   "USR-RO-001": {
     id: "USR-RO-001",
-    name: "Adebayo Sterling",
-    email: "adebayo.sterling@mis.bank",
+    name: "Adebayo Adeyemi",
+    email: "adebayo.adeyemi@demo.invalid",
     role: "RO",
     roId: "RO-001",
     regionId: "REG-01",
@@ -33,7 +33,7 @@ export const MOCK_USERS: Record<string, User> = {
   "USR-RO-002": {
     id: "USR-RO-002",
     name: "Chioma Okonkwo",
-    email: "chioma.okonkwo@mis.bank",
+    email: "chioma.okonkwo@demo.invalid",
     role: "RO",
     roId: "RO-002",
     regionId: "REG-01",
@@ -45,7 +45,7 @@ export const MOCK_USERS: Record<string, User> = {
   "USR-RO-003": {
     id: "USR-RO-003",
     name: "Emeka Nwosu",
-    email: "emeka.nwosu@mis.bank",
+    email: "emeka.nwosu@demo.invalid",
     role: "RO",
     roId: "RO-003",
     regionId: "REG-02",
@@ -57,7 +57,7 @@ export const MOCK_USERS: Record<string, User> = {
   "USR-RM-001": {
     id: "USR-RM-001",
     name: "Babatunde Folorunsho",
-    email: "babatunde.folorunsho@mis.bank",
+    email: "babatunde.folorunsho@demo.invalid",
     role: "REGIONAL_MANAGER",
     regionId: "REG-01",
     allowedRegionIds: ["REG-01"],
@@ -68,7 +68,7 @@ export const MOCK_USERS: Record<string, User> = {
   "USR-RM-002": {
     id: "USR-RM-002",
     name: "Aisha Bello",
-    email: "aisha.bello@mis.bank",
+    email: "aisha.bello@demo.invalid",
     role: "REGIONAL_MANAGER",
     regionId: "REG-02",
     allowedRegionIds: ["REG-02"],
@@ -111,7 +111,7 @@ export const MOCK_CUSTOMERS: CustomerSummaryItem[] = [
     totalPortfolio: 350000000,
     activeInvestmentsCount: 3,
     relationshipOfficerId: "RO-001",
-    relationshipOfficerName: "Adebayo Sterling",
+    relationshipOfficerName: "Adebayo Adeyemi",
     branchName: "Victoria Island Branch",
     tier: "Platinum",
   },
@@ -122,7 +122,7 @@ export const MOCK_CUSTOMERS: CustomerSummaryItem[] = [
     totalPortfolio: 250000000,
     activeInvestmentsCount: 2,
     relationshipOfficerId: "RO-001",
-    relationshipOfficerName: "Adebayo Sterling",
+    relationshipOfficerName: "Adebayo Adeyemi",
     branchName: "Victoria Island Branch",
     tier: "Gold",
   },
@@ -133,7 +133,7 @@ export const MOCK_CUSTOMERS: CustomerSummaryItem[] = [
     totalPortfolio: 200000000,
     activeInvestmentsCount: 2,
     relationshipOfficerId: "RO-001",
-    relationshipOfficerName: "Adebayo Sterling",
+    relationshipOfficerName: "Adebayo Adeyemi",
     branchName: "Victoria Island Branch",
     tier: "Platinum",
   },
@@ -163,7 +163,7 @@ export const MOCK_INVESTMENTS: InvestmentDealItem[] = [
     effectiveDate: "2026-07-01",
     maturityDate: "2026-09-29",
     roId: "RO-001",
-    roName: "Adebayo Sterling",
+    roName: "Adebayo Adeyemi",
     status: "Active",
   },
   {
@@ -178,7 +178,7 @@ export const MOCK_INVESTMENTS: InvestmentDealItem[] = [
     effectiveDate: "2026-06-15",
     maturityDate: "2026-12-14",
     roId: "RO-001",
-    roName: "Adebayo Sterling",
+    roName: "Adebayo Adeyemi",
     status: "Active",
   },
   {
@@ -193,7 +193,7 @@ export const MOCK_INVESTMENTS: InvestmentDealItem[] = [
     effectiveDate: "2026-01-10",
     maturityDate: "2027-01-10",
     roId: "RO-001",
-    roName: "Adebayo Sterling",
+    roName: "Adebayo Adeyemi",
     status: "Active",
   },
 ];

@@ -11,7 +11,11 @@ const MUTED = "667085";
 const LINE = "E4E7EC";
 const WHITE = "FFFFFF";
 const SOFT = "F7F8FA";
-const SYNTHETIC_LABEL = "SYNTHETIC DEMONSTRATION DATA — NOT ACTUAL SAMTL FINANCIAL PERFORMANCE";
+const SYNTHETIC_LABEL = "SYNTHETIC DEMONSTRATION DATA — NOT ACTUAL COMPANY FINANCIAL PERFORMANCE";
+
+function reportBrand(data: MprReportData) {
+  return data.synthetic ? "MIS DEMO" : "SAMTL";
+}
 
 function money(value: number | null, decimals = 1) {
   if (value === null || !Number.isFinite(value)) return "Unavailable";
@@ -39,7 +43,7 @@ function monthLabel(value: string) {
 function addChrome(pptx: pptxgen, slide: pptxgen.Slide, title: string, data: MprReportData, slideNumber: number) {
   slide.background = { color: WHITE };
   slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.333, h: 0.16, line: { color: BURGUNDY, transparency: 100 }, fill: { color: BURGUNDY } });
-  slide.addText("SAMTL", { x: 0.42, y: 0.28, w: 1.25, h: 0.3, color: BURGUNDY, bold: true, fontFace: "Aptos Display", fontSize: 20, margin: 0 });
+  slide.addText(reportBrand(data), { x: 0.42, y: 0.28, w: 1.75, h: 0.3, color: BURGUNDY, bold: true, fontFace: "Aptos Display", fontSize: 20, margin: 0, fit: "shrink" });
   slide.addText(title, { x: 0.42, y: 0.8, w: 9.8, h: 0.45, color: INK, bold: true, fontFace: "Aptos Display", fontSize: 24, margin: 0 });
   slide.addText(`${data.teamName}  |  Cutoff ${shortDate(data.reportingCutoff)}`, { x: 9.55, y: 0.35, w: 3.35, h: 0.25, color: MUTED, fontSize: 9, align: "right", margin: 0 });
   slide.addShape(pptx.ShapeType.line, { x: 0.42, y: 7.12, w: 12.48, h: 0, line: { color: LINE, width: 1 } });
@@ -89,8 +93,8 @@ function addCover(pptx: pptxgen, data: MprReportData) {
   const slide = pptx.addSlide();
   slide.background = { color: BURGUNDY };
   slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 4.5, h: 7.5, line: { color: "7D1320", transparency: 100 }, fill: { color: "7D1320" } });
-  slide.addText("SAMTL", { x: 0.6, y: 0.55, w: 2, h: 0.48, color: WHITE, bold: true, fontSize: 26, margin: 0 });
-  slide.addText("SAMTL Monthly Performance Review", { x: 0.6, y: 2.1, w: 10.8, h: 0.46, color: "F2C8CD", fontSize: 18, bold: true, charSpacing: 0.8, margin: 0 });
+  slide.addText(reportBrand(data), { x: 0.6, y: 0.55, w: 2.4, h: 0.48, color: WHITE, bold: true, fontSize: 26, margin: 0, fit: "shrink" });
+  slide.addText(data.synthetic ? "Monthly Performance Review — Demonstration" : "SAMTL Monthly Performance Review", { x: 0.6, y: 2.1, w: 10.8, h: 0.46, color: "F2C8CD", fontSize: 18, bold: true, charSpacing: 0.8, margin: 0, fit: "shrink" });
   slide.addText(data.teamName, { x: 0.6, y: 2.62, w: 10.7, h: 0.85, color: WHITE, fontFace: "Aptos Display", fontSize: 34, bold: true, margin: 0, breakLine: false, fit: "shrink" });
   slide.addText(`Year to date through ${shortDate(data.reportingCutoff)}`, { x: 0.6, y: 3.65, w: 7.5, h: 0.35, color: "F8E9EB", fontSize: 16, margin: 0 });
   slide.addShape(pptx.ShapeType.roundRect, { x: 0.6, y: 5.38, w: 6.25, h: 0.55, rectRadius: 0.05, line: { color: "F2C8CD" }, fill: { color: "7D1320" } });
@@ -242,15 +246,15 @@ function addMethodology(pptx: pptxgen, data: MprReportData, slideNumber: number)
 export async function generateMprPresentation(data: MprReportData): Promise<Buffer> {
   const pptx = new pptxgen();
   pptx.layout = "LAYOUT_WIDE";
-  pptx.author = "SAMTL Management Information System";
-  pptx.company = "SAMTL";
+  pptx.author = data.synthetic ? "MIS Demonstration" : "SAMTL Management Information System";
+  pptx.company = data.synthetic ? "MIS Demonstration" : "SAMTL";
   pptx.subject = `Monthly Performance Review for ${data.teamName}`;
   pptx.title = `${data.teamName} Monthly Performance Review`;
   pptx.theme = {
     headFontFace: "Aptos Display", bodyFontFace: "Aptos",
   };
   pptx.defineSlideMaster({
-    title: "BLANK_SAMTL", background: { color: WHITE }, objects: [],
+    title: data.synthetic ? "BLANK_MIS_DEMO" : "BLANK_SAMTL", background: { color: WHITE }, objects: [],
     slideNumber: { x: 12.35, y: 7.15, w: 0.5, h: 0.2, color: MUTED, fontSize: 8, align: "right" },
   });
 

@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[2]
 RUNTIME = ROOT / '.local' / 'superset'
 RUNTIME.mkdir(parents=True, exist_ok=True)
 SNAPSHOTS = json.loads((ROOT / 'src/mocks/dashboard-snapshots.json').read_text())
-NAMES = {'RO-001': 'Adebayo Sterling', 'RO-002': 'Chioma Okonkwo', 'RO-003': 'Emeka Nwosu'}
+NAMES = {'RO-001': 'Adebayo Adeyemi', 'RO-002': 'Chioma Okonkwo', 'RO-003': 'Emeka Nwosu'}
 COMMON = 'region_id TEXT, scope_key TEXT, as_of_date TEXT, product_filter TEXT, period_mode TEXT'
 
 def seed():

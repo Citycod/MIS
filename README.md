@@ -7,7 +7,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open `http://localhost:3000/login` and select a demo persona. Lagos ROs are Adebayo Sterling and Chioma Okonkwo; Lagos manager is Babatunde Folorunsho; Abuja manager is Aisha Bello. The demo persona menu also provides Emeka Nwosu (Abuja RO).
+Open `http://localhost:3000/login` and select a demo persona. Lagos ROs are Adebayo Adeyemi and Chioma Okonkwo; Lagos manager is Babatunde Folorunsho; Abuja manager is Aisha Bello. The demo persona menu also provides Emeka Nwosu (Abuja RO).
 
 Dashboard snapshots cover Jan–Sep 2026 month-ends and 15 September 2026. Default: 30 September 2026. Unavailable dates/products show an empty state. Financial values are precomputed mock reporting outputs, not production calculations.
 

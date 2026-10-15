@@ -28,7 +28,7 @@ WITH movement AS (
   SELECT DISTINCT p.region_id,
     CASE p.region_id WHEN 'REG-01' THEN 'Lagos Region' WHEN 'REG-02' THEN 'Abuja Region' ELSE p.region_id END region_name,
     p.scope_key, CASE WHEN instr(p.scope_key, ',') > 0 THEN 'All Relationship Officers'
-      WHEN p.scope_key='RO-001' THEN 'Adebayo Sterling' WHEN p.scope_key='RO-002' THEN 'Chioma Okonkwo'
+      WHEN p.scope_key='RO-001' THEN 'Adebayo Adeyemi' WHEN p.scope_key='RO-002' THEN 'Chioma Okonkwo'
       WHEN p.scope_key='RO-003' THEN 'Emeka Nwosu' ELSE p.scope_key END scope_label
   FROM dev_synthetic_position p
 ), products AS (
@@ -48,7 +48,7 @@ WITH movement AS (
   SELECT 'kpi' row_kind, date(p.as_of_date) reporting_date, p.region_id,
     CASE p.region_id WHEN 'REG-01' THEN 'Lagos Region' WHEN 'REG-02' THEN 'Abuja Region' ELSE p.region_id END region_name,
     p.scope_key, CASE WHEN instr(p.scope_key, ',') > 0 THEN 'All Relationship Officers'
-      WHEN p.scope_key='RO-001' THEN 'Adebayo Sterling' WHEN p.scope_key='RO-002' THEN 'Chioma Okonkwo'
+      WHEN p.scope_key='RO-001' THEN 'Adebayo Adeyemi' WHEN p.scope_key='RO-002' THEN 'Chioma Okonkwo'
       WHEN p.scope_key='RO-003' THEN 'Emeka Nwosu' ELSE p.scope_key END scope_label,
     'All Products' product_filter, NULL product, p.annual_target, NULL completion_rate,
     NULL external_inflow, 'SYNTHETIC_DEMO_ONLY' data_classification
@@ -58,7 +58,7 @@ WITH movement AS (
   SELECT 'trend', date(m.month || '-01'), m.region_id,
     CASE m.region_id WHEN 'REG-01' THEN 'Lagos Region' WHEN 'REG-02' THEN 'Abuja Region' ELSE m.region_id END,
     m.scope_key, CASE WHEN instr(m.scope_key, ',') > 0 THEN 'All Relationship Officers'
-      WHEN m.scope_key='RO-001' THEN 'Adebayo Sterling' WHEN m.scope_key='RO-002' THEN 'Chioma Okonkwo'
+      WHEN m.scope_key='RO-001' THEN 'Adebayo Adeyemi' WHEN m.scope_key='RO-002' THEN 'Chioma Okonkwo'
       WHEN m.scope_key='RO-003' THEN 'Emeka Nwosu' ELSE m.scope_key END,
     'All Products', NULL, NULL, NULL, m.inflows, 'SYNTHETIC_DEMO_ONLY'
   FROM movement m
@@ -66,7 +66,7 @@ WITH movement AS (
   SELECT 'trend', date(pm.month || '-01'), pm.region_id,
     CASE pm.region_id WHEN 'REG-01' THEN 'Lagos Region' WHEN 'REG-02' THEN 'Abuja Region' ELSE pm.region_id END,
     pm.scope_key, CASE WHEN instr(pm.scope_key, ',') > 0 THEN 'All Relationship Officers'
-      WHEN pm.scope_key='RO-001' THEN 'Adebayo Sterling' WHEN pm.scope_key='RO-002' THEN 'Chioma Okonkwo'
+      WHEN pm.scope_key='RO-001' THEN 'Adebayo Adeyemi' WHEN pm.scope_key='RO-002' THEN 'Chioma Okonkwo'
       WHEN pm.scope_key='RO-003' THEN 'Emeka Nwosu' ELSE pm.scope_key END,
     pm.product, NULL, NULL, NULL, pm.external_inflow, 'SYNTHETIC_DEMO_ONLY'
   FROM product_movement pm
@@ -74,7 +74,7 @@ WITH movement AS (
   SELECT 'mix', date(pm.month || '-01'), pm.region_id,
     CASE pm.region_id WHEN 'REG-01' THEN 'Lagos Region' WHEN 'REG-02' THEN 'Abuja Region' ELSE pm.region_id END,
     pm.scope_key, CASE WHEN instr(pm.scope_key, ',') > 0 THEN 'All Relationship Officers'
-      WHEN pm.scope_key='RO-001' THEN 'Adebayo Sterling' WHEN pm.scope_key='RO-002' THEN 'Chioma Okonkwo'
+      WHEN pm.scope_key='RO-001' THEN 'Adebayo Adeyemi' WHEN pm.scope_key='RO-002' THEN 'Chioma Okonkwo'
       WHEN pm.scope_key='RO-003' THEN 'Emeka Nwosu' ELSE pm.scope_key END,
     f.product_filter, pm.product, NULL, NULL, pm.external_inflow, 'SYNTHETIC_DEMO_ONLY'
   FROM product_movement pm CROSS JOIN (SELECT 'All Products' product_filter UNION ALL SELECT 'Selected Product') f

@@ -35,7 +35,7 @@ test.describe.serial("secure Monthly Performance Review export", () => {
     const response = await page.request.post("/api/mpr/export", { data: exportRequest });
     expect(response.status()).toBe(200);
     expect(response.headers()["content-type"]).toContain("presentationml.presentation");
-    expect(response.headers()["content-disposition"]).toContain("SAMTL-MPR-Lagos-2026-10-10.pptx");
+    expect(response.headers()["content-disposition"]).toContain("MIS-Demo-MPR-Lagos-2026-10-10.pptx");
     expect(response.headers()["cache-control"]).toContain("no-store");
     const bytes = await response.body();
     expect(bytes.subarray(0, 2).toString()).toBe("PK");
@@ -87,7 +87,7 @@ test.describe.serial("secure Monthly Performance Review export", () => {
     expect(Math.abs(repeatedBytes.byteLength - bytes.byteLength)).toBeLessThan(1024);
     const artifactDir = path.join(process.cwd(), "doc", "qa", "mpr");
     await mkdir(artifactDir, { recursive: true });
-    await writeFile(path.join(artifactDir, "SAMTL-MPR-Lagos-2026-10-10.pptx"), bytes);
+    await writeFile(path.join(artifactDir, "MIS-Demo-MPR-Lagos-2026-10-10.pptx"), bytes);
     expect(bytes.subarray(0, 2).toString()).toBe("PK");
 
     const completeTargets = [

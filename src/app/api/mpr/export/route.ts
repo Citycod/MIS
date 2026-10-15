@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
       cutoff: report.reportingCutoff, classification: report.synthetic ? "SYNTHETIC_DEMO_ONLY" : "CONTROLLED_SOURCE_IMPORT",
       teamRows: report.rows.length, presentationBytes: presentation.byteLength,
     });
-    const filename = `SAMTL-MPR-${safeFilePart(report.teamName)}-${report.reportingCutoff}.pptx`;
+    const prefix = report.synthetic ? "MIS-Demo-MPR" : "SAMTL-MPR";
+    const filename = `${prefix}-${safeFilePart(report.teamName)}-${report.reportingCutoff}.pptx`;
     return new NextResponse(new Uint8Array(presentation), {
       status: 200,
       headers: {

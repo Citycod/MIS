@@ -102,8 +102,8 @@ test("CSV template and authorized synthetic upload switch to the isolated Supers
   await expect(page.getByRole("dialog", { name: "Import synthetic CSV data" })).toBeVisible();
   const csv = [
     "reporting_date,region_id,region_name,ro_id,ro_name,product,annual_target_ngn,funds_mobilized_ngn,target_completion_pct",
-    "2026-01-31,REG-01,Lagos Region,RO-001,Adebayo Sterling,SESA without TAX,1200000000,50000000,",
-    "2026-02-28,REG-01,Lagos Region,RO-001,Adebayo Sterling,SHYTA,1200000000,85000000,",
+    "2026-01-31,REG-01,Lagos Region,RO-001,Adebayo Adeyemi,SESA without TAX,1200000000,50000000,",
+    "2026-02-28,REG-01,Lagos Region,RO-001,Adebayo Adeyemi,SHYTA,1200000000,85000000,",
   ].join("\n");
   await page.getByLabel("CSV file").setInputFiles({ name: "synthetic-performance.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
   await page.getByRole("button", { name: "Import and refresh" }).click();
@@ -112,7 +112,7 @@ test("CSV template and authorized synthetic upload switch to the isolated Supers
   await expect(page.getByText("Imported CSV · Synthetic Data")).toBeVisible();
   await expectSupersetCharts(page);
 
-  const denied = csv.replaceAll("RO-001", "RO-002").replaceAll("Adebayo Sterling", "Chioma Okonkwo");
+  const denied = csv.replaceAll("RO-001", "RO-002").replaceAll("Adebayo Adeyemi", "Chioma Okonkwo");
   const response = await page.request.post("/api/csv-import", {
     multipart: { file: { name: "unauthorized.csv", mimeType: "text/csv", buffer: Buffer.from(denied) } },
   });

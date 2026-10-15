@@ -158,7 +158,7 @@ export function getMprReportData(session: Session, requestedTeamId: string, requ
       synthetic,
       sourceVersions: [
         `Financial event source ${String(settings.active_source_sha256).slice(0, 12)}`,
-        `Product mapping ${String(settings.mapping_version)}`,
+        `Product mapping ${synthetic ? String(settings.mapping_version).replace(/^samtl-/i, "") : String(settings.mapping_version)}`,
         ...new Set(rows.flatMap(row => [row.targetSource, row.positionSource])),
       ],
       methodology: [

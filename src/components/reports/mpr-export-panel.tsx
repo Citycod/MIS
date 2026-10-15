@@ -12,7 +12,7 @@ type Props = {
 
 function responseFilename(response: Response) {
   const disposition = response.headers.get("content-disposition") ?? "";
-  return disposition.match(/filename="([^"]+)"/)?.[1] ?? "SAMTL-Monthly-Performance-Review.pptx";
+  return disposition.match(/filename="([^"]+)"/)?.[1] ?? "MIS-Demo-Monthly-Performance-Review.pptx";
 }
 
 export function MprExportPanel({ teamId, teamName, cutoff, canImport }: Props) {
