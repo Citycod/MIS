@@ -7,6 +7,7 @@ import {
   BarChart3,
   ChartNoAxesCombined,
   ClipboardList,
+  ChevronDown,
   FolderKanban,
   LayoutGrid,
   LogOut,
@@ -14,7 +15,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Target,
-  TrendingUp,
   UserRound,
   UsersRound,
   X,
@@ -22,28 +22,34 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/auth";
+import { csrfFetch } from "@/lib/client/csrf";
 
-interface SidebarProps { role: UserRole }
+interface SidebarProps { role: UserRole; canManageUsers?: boolean }
 type NavigationItem = { title: string; href: string; icon: LucideIcon; matches: string[] };
 
-export function Sidebar({ role }: SidebarProps) {
+export function Sidebar({ role, canManageUsers = false }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
   const [collapsed, setCollapsed] = useState(false);
   const base = role === "REGIONAL_MANAGER" ? "/regional" : "/ro";
+  const dashboardChildren = [
+    { title: "RO Profitability Summary", href: `${base}/dashboard/profitability-summary` },
+    { title: "YTD Account Opening Summary", href: `${base}/dashboard/account-opening-summary` },
+    { title: "RO Position Summary", href: `${base}/dashboard/position-summary` },
+  ];
+  const dashboardActive = pathname === `${base}/dashboard` || dashboardChildren.some(item => pathname.startsWith(item.href));
+  const [dashboardOpen, setDashboardOpen] = useState(dashboardActive);
   const workspaceItems: NavigationItem[] = [
-    { title: "Dashboard", href: `${base}/dashboard?source=financial-sample`, icon: LayoutGrid, matches: [`${base}/dashboard`] },
     { title: "Investment", href: `${base}/investments?source=financial-sample`, icon: FolderKanban, matches: [`${base}/investments`] },
     { title: "Customers", href: `${base}/customers?source=financial-sample`, icon: UsersRound, matches: [`${base}/customers`] },
     { title: "Concentration Risk", href: `${base}/concentration-risk?source=financial-sample`, icon: BarChart3, matches: [`${base}/concentration-risk`] },
-    { title: "Profitability", href: `${base}/profitability?source=financial-sample`, icon: TrendingUp, matches: [`${base}/profitability`] },
     { title: "Target & Run Rate", href: `${base}/targets?source=financial-sample`, icon: Target, matches: [`${base}/targets`] },
     { title: "Export Data", href: `${base}/reports?source=financial-sample`, icon: ClipboardList, matches: [`${base}/reports`] },
   ];
 
   async function logout() {
-    const response = await fetch("/api/auth/logout", { method: "POST" });
+    const response = await csrfFetch("/api/auth/logout", { method: "POST" });
     if (response.ok) {
       dialog.current?.close();
       router.push("/login");
@@ -94,13 +100,48 @@ export function Sidebar({ role }: SidebarProps) {
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-5" aria-label="Primary navigation">
         {!collapsed && <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#A51F27]">Workspace</p>}
-        <div className="space-y-1">{workspaceItems.map(navigationLink)}</div>
+        <div className="space-y-1">
+          <button
+            type="button"
+            title={collapsed ? "Dashboard" : undefined}
+            aria-expanded={dashboardOpen}
+            aria-controls="dashboard-submenu"
+            className={cn(
+              "flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-[13px] font-medium transition-colors",
+              dashboardActive ? "bg-[#A51F27] text-white" : "text-[#252525] hover:bg-white",
+              collapsed && "justify-center px-0",
+            )}
+            onClick={() => {
+              if (collapsed) setCollapsed(false);
+              setDashboardOpen(value => !value);
+            }}
+          >
+            <LayoutGrid size={17} strokeWidth={1.8} className="shrink-0" />
+            {!collapsed && <><span className="min-w-0 flex-1 truncate text-left">Dashboard</span><ChevronDown size={15} className={cn("shrink-0 transition-transform", dashboardOpen && "rotate-180")} /></>}
+          </button>
+          {!collapsed && dashboardOpen && <div id="dashboard-submenu" className="space-y-1 border-l border-[#E5C8CA] pl-3 ml-5">
+            {dashboardChildren.map(item => {
+              const active = pathname.startsWith(item.href);
+              return <Link
+                key={item.title}
+                href={`${item.href}?source=financial-sample`}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex min-h-9 items-center rounded-lg px-3 text-[12px] font-medium leading-4 transition-colors",
+                  active ? "bg-[#F2DADD] text-[#7A171D]" : "text-[#4B4B4B] hover:bg-white hover:text-[#651015]",
+                )}
+              >{item.title}</Link>;
+            })}
+          </div>}
+          {workspaceItems.map(navigationLink)}
+        </div>
       </nav>
 
       <div className="shrink-0 border-t border-[#F0DEDF] px-3 py-4">
         {!collapsed && <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#A51F27]">My account</p>}
         <div className="space-y-1">
           {navigationLink({ title: "My Profile", href: "/profile", icon: UserRound, matches: ["/profile"] })}
+          {canManageUsers && navigationLink({ title: "User Administration", href: "/admin/users", icon: UsersRound, matches: ["/admin/users"] })}
           <button
             type="button"
             title={collapsed ? "Log Out" : undefined}

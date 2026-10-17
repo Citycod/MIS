@@ -3,6 +3,8 @@ import { getCurrentSession } from "@/lib/server/security/auth";
 import { ScopeError } from "@/lib/server/security/scope";
 import { importMprSource, importTemplate, MprImportError, type MprImportType } from "@/lib/server/mpr/importer";
 import { resolveMprScope } from "@/lib/server/mpr/reporting";
+import { requestNetworkContext, verifyCsrf } from "@/lib/server/security/csrf";
+import { recordAudit } from "@/lib/server/identity/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +51,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!verifyCsrf(request)) return NextResponse.json({ error: "Invalid security token." }, { status: 403, headers: PRIVATE_HEADERS });
   const session = await getCurrentSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: PRIVATE_HEADERS });
   if (!sameOrigin(request)) return NextResponse.json({ error: "Invalid origin" }, { status: 403, headers: PRIVATE_HEADERS });
@@ -62,6 +65,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id, role: session.user.role, teamId: session.scope.effectiveRegionId,
       sourceType: type, importId: result.importId, rowCount: result.rows, idempotent: result.idempotent,
     });
+    recordAudit({ ...requestNetworkContext(request), actorUserId: session.user.id }, "reporting.mpr.source_imported", "success", "team", session.scope.effectiveRegionId, { sourceType: type, rows: result.rows, idempotent: result.idempotent });
     return NextResponse.json({
       message: result.idempotent ? `This source file was already imported (${result.rows} rows).` : `Imported ${result.rows} controlled source rows.`,
       ...result,

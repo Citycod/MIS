@@ -14,9 +14,13 @@ export default async function WorkspaceLayout({ children }: WorkspaceLayoutProps
     redirect("/login");
   }
 
+  if (session.mustChangePassword) {
+    redirect("/change-password");
+  }
+
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar role={session.user.role} />
+      <Sidebar role={session.user.role} canManageUsers={session.permissions.includes("identity.users.manage")} />
 
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar user={session.user} />

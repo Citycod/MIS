@@ -1,38 +1,63 @@
 import "server-only";
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
-import { Session } from "@/types/auth";
+import type { Session } from "@/types/auth";
 import { normalizeAuthorizedScope } from "./scope";
-import { getActiveDataCatalog } from "@/lib/server/repository/data-catalog";
+import {
+  createServerSession,
+  identityUserToApplicationUser,
+  loadServerSession,
+  revokeSessionByToken,
+  type LoadedIdentitySession,
+} from "@/lib/server/identity/store";
+import type { IdentityProvider, ManagedIdentityUser } from "@/lib/server/identity/types";
 
-const SESSION_COOKIE_NAME = "pis_session";
-// Demo sessions only. A runtime secret may be supplied for multi-process demos.
-// Without one, restart expires all sessions. Institutional identity remains an integration dependency.
-const runtime = globalThis as typeof globalThis & { pisDemoSessionKey?: string };
-const secret = process.env.SESSION_SECRET || (runtime.pisDemoSessionKey ??= randomBytes(32).toString("hex"));
-function signature(payload: string) { return createHmac("sha256", secret).update(payload).digest("hex"); }
+export const SESSION_COOKIE_NAME = "mis_session";
+export const MFA_CHALLENGE_COOKIE_NAME = "mis_mfa_challenge";
+
+export function sessionCookieOptions(expiresAt: number) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" && process.env.MIS_IDENTITY_TEST_MODE !== "true",
+    sameSite: "strict" as const,
+    path: "/",
+    expires: new Date(expiresAt),
+    priority: "high" as const,
+  };
+}
+
+function materializeSession(loaded: LoadedIdentitySession, rawFilters?: Record<string, string>): Session {
+  const user = identityUserToApplicationUser(loaded.user);
+  const { scope } = normalizeAuthorizedScope(user, rawFilters);
+  return {
+    user,
+    scope,
+    sessionId: loaded.tokenHash,
+    issuedAt: new Date(loaded.createdAt).toISOString(),
+    expiresAt: new Date(loaded.expiresAt).toISOString(),
+    authProvider: loaded.authProvider,
+    mfaVerified: loaded.mfaVerified,
+    mfaEnabled: loaded.user.mfaEnabled,
+    mustChangePassword: loaded.user.mustChangePassword,
+    permissions: loaded.user.permissions,
+  };
+}
 
 export async function getCurrentSession(rawFilters?: Record<string, string>): Promise<Session | null> {
   const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
-  const [payload, mac, extra] = token.split(".");
-  if (!payload || !mac || extra || !/^[a-f0-9]{64}$/.test(mac)) return null;
-  if (!timingSafeEqual(Buffer.from(mac, "hex"), Buffer.from(signature(payload), "hex"))) return null;
-  try {
-    const { userId, expires } = JSON.parse(Buffer.from(payload, "base64url").toString());
-    const users = getActiveDataCatalog().users;
-    const user = typeof userId === "string" && Object.hasOwn(users, userId) ? users[userId] : undefined;
-    if (!user || typeof expires !== "number" || expires <= Date.now()) return null;
-    const { scope } = normalizeAuthorizedScope(user, rawFilters);
-    return { user, scope, expiresAt: new Date(expires).toISOString() };
-  } catch { return null; }
+  const loaded = loadServerSession(token);
+  return loaded ? materializeSession(loaded, rawFilters) : null;
 }
-export async function setSessionUser(userId: string): Promise<boolean> {
-  if (typeof userId !== "string" || !Object.hasOwn(getActiveDataCatalog().users, userId)) return false;
-  const payload = Buffer.from(JSON.stringify({ userId, expires: Date.now() + 86400000 })).toString("base64url");
-  (await cookies()).set(SESSION_COOKIE_NAME, `${payload}.${signature(payload)}`, {
-    httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 86400,
-  });
-  return true;
+
+export function createIdentitySession(user: ManagedIdentityUser, provider: IdentityProvider, mfaVerified: boolean, ip: string | null, userAgent: string | null) {
+  return createServerSession(user.id, provider, mfaVerified, ip, userAgent);
 }
-export async function clearSession(): Promise<void> { (await cookies()).delete(SESSION_COOKIE_NAME); }
+
+export async function clearSession(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const userId = token ? revokeSessionByToken(token) : null;
+  cookieStore.delete(SESSION_COOKIE_NAME);
+  cookieStore.delete(MFA_CHALLENGE_COOKIE_NAME);
+  return userId;
+}

@@ -1,8 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
+import { csrfPost, loginAs } from "../helpers/auth";
 
 async function login(page: Page, userId: string, route: string) {
-  const response = await page.request.post("/api/auth/login", { data: { userId } });
-  expect(response.ok()).toBeTruthy();
+  await loginAs(page, userId);
   await page.goto(route, { waitUntil: "domcontentloaded", timeout: 120000 });
 }
 
@@ -62,7 +62,7 @@ test("filters preserve URL state and disabled Superset cannot issue a demo-v2 to
   expect(await kpis(page).innerText()).toBe(regionalKpis);
   await expect(page.getByRole("combobox", { name: "Region", exact: true })).toBeDisabled();
 
-  const response = await page.request.post("/api/superset/guest-token", {
+  const response = await csrfPost(page, "/api/superset/guest-token", {
     data: {
       dashboardKey: "regional_overview:movement",
       filters: { regionId: "LAG", roId: "ALL", asOfDate: "2026-09-30", productCode: "PROD-TREASURY", periodMode: "YTD" },

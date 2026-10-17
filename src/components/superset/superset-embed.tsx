@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { EmbeddedDashboard } from "@superset-ui/embedded-sdk";
 import type { GlobalFilters } from "@/types/filter";
+import { csrfFetch } from "@/lib/client/csrf";
 
 export function SupersetEmbed({ dashboardKey, title, filters, fullDashboard = false }: { dashboardKey: string; title: string; filters: GlobalFilters; fullDashboard?: boolean }) {
   const mount = useRef<HTMLDivElement>(null);
@@ -11,11 +12,12 @@ export function SupersetEmbed({ dashboardKey, title, filters, fullDashboard = fa
   const [attempt, setAttempt] = useState(0);
   const serialized = JSON.stringify(filters);
   const financialSample = dashboardKey.startsWith("financial_sample_");
+  const mprDashboard = dashboardKey.startsWith("financial_sample_mpr_");
   useEffect(() => {
     const controller = new AbortController();
     let embedded: EmbeddedDashboard | undefined;
     async function credentials() {
-      const response = await fetch("/api/superset/guest-token", {
+      const response = await csrfFetch("/api/superset/guest-token", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dashboardKey, filters: JSON.parse(serialized) }),
         signal: controller.signal, cache: "no-store",
@@ -58,7 +60,9 @@ export function SupersetEmbed({ dashboardKey, title, filters, fullDashboard = fa
     return () => { controller.abort(); embedded?.unmount(); };
   }, [dashboardKey, title, serialized, attempt, fullDashboard, financialSample]);
   const height = financialSample
-    ? dashboardKey === "financial_sample_overview"
+    ? mprDashboard
+      ? "h-[3600px] sm:h-[3000px] lg:h-[2450px]"
+      : dashboardKey === "financial_sample_overview"
       ? "h-[2200px] sm:h-[1800px] lg:h-[1450px]"
       : "h-[1500px] sm:h-[1200px] lg:h-[980px]"
     : fullDashboard ? "h-[1280px] sm:h-[980px] lg:h-[700px]" : "h-[320px]";

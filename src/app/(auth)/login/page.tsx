@@ -1,39 +1,43 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
-import { MOCK_USERS } from "@/mocks/fixtures";
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { csrfFetch, getCsrfToken } from "@/lib/client/csrf";
 
 export default function LoginPage() {
   const router = useRouter();
-  const personas = useMemo(() => Object.values(MOCK_USERS), []);
-  const [email, setEmail] = useState(personas[0]?.email ?? "");
-  const [password, setPassword] = useState("demo");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaRequired, setMfaRequired] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function signIn(event: React.FormEvent) {
+  useEffect(() => { void getCsrfToken().catch(() => setError("Unable to initialize secure sign-in.")); }, []);
+
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const user = personas.find(persona => persona.email.toLowerCase() === email.trim().toLowerCase());
-    if (!user || password !== "demo") {
-      setError("Use a listed development persona and the development password.");
-      return;
-    }
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await csrfFetch(mfaRequired ? "/api/auth/mfa/verify" : "/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify(mfaRequired ? { code: mfaCode } : { username, password }),
       });
-      if (!response.ok) throw new Error("Sign in failed");
-      router.push(user.role === "REGIONAL_MANAGER" ? "/regional/dashboard?source=financial-sample" : "/ro/dashboard?source=financial-sample");
+      const body = await response.json() as { error?: string; mfaRequired?: boolean; redirectTo?: string };
+      if (!response.ok) throw new Error(body.error || "Sign in failed.");
+      if (body.mfaRequired) {
+        setMfaRequired(true);
+        setPassword("");
+        return;
+      }
+      router.push(body.redirectTo || "/dashboard");
       router.refresh();
-    } catch {
-      setError("Unable to sign in. Please try again.");
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Unable to sign in. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -43,31 +47,38 @@ export default function LoginPage() {
     <main className="login-shell">
       <section className="login-card" aria-labelledby="login-heading">
         <div className="samtl-wordmark" aria-label="SAMTL">SAMTL</div>
-        <h1 id="login-heading">Sign in to your Account</h1>
-        <form onSubmit={signIn} className="mt-8 space-y-5">
-          <label className="block text-sm font-medium text-[#252525]">
-            Email Address
-            <input className="samtl-input" type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required />
-          </label>
-          <label className="block text-sm font-medium text-[#252525]">
-            Password
-            <span className="relative mt-2 block">
-              <input className="samtl-input mt-0! pr-12!" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} required />
-              <button type="button" className="absolute inset-y-0 right-0 grid w-12 place-items-center text-[#737373]" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(value => !value)}>
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </span>
-          </label>
+        <h1 id="login-heading">{mfaRequired ? "Verify your identity" : "Sign in to your account"}</h1>
+        <p className="mt-2 text-sm leading-6 text-[#667085]">
+          {mfaRequired ? "Enter the six-digit code from your approved authenticator app." : "Use your assigned staff ID or username and password."}
+        </p>
+        <form onSubmit={submit} className="mt-8 space-y-5">
+          {!mfaRequired && <>
+            <label className="block text-sm font-medium text-[#252525]">
+              Staff ID or username
+              <input className="samtl-input" autoComplete="username" value={username} onChange={event => setUsername(event.target.value)} required autoFocus />
+            </label>
+            <label className="block text-sm font-medium text-[#252525]">
+              Password
+              <span className="relative mt-2 block">
+                <input className="samtl-input mt-0! pr-12!" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} required />
+                <button type="button" className="absolute inset-y-0 right-0 grid w-12 place-items-center text-[#737373]" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(value => !value)}>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </span>
+            </label>
+          </>}
+          {mfaRequired && <label className="block text-sm font-medium text-[#252525]">
+            Authenticator code
+            <input className="samtl-input text-center font-mono text-lg tracking-[0.35em]" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" value={mfaCode} onChange={event => setMfaCode(event.target.value.replace(/\D/gu, ""))} required autoFocus />
+          </label>}
           {error && <p role="alert" className="text-sm text-[#A51F27]">{error}</p>}
-          <button className="samtl-primary-button w-full" disabled={loading} type="submit">{loading ? "Signing in…" : "Continue"}</button>
+          <button className="samtl-primary-button w-full" disabled={loading} type="submit">{loading ? "Checking…" : mfaRequired ? "Verify and continue" : "Continue"}</button>
+          {mfaRequired && <button type="button" className="w-full text-sm font-semibold text-[#651015]" onClick={() => { setMfaRequired(false); setMfaCode(""); setError(""); }}>Use another account</button>}
         </form>
-        <details className="mt-5 border-t border-[#E5E5E5] pt-4 text-sm text-[#737373]">
-          <summary className="cursor-pointer font-medium text-[#651015]">Development access</summary>
-          <p className="mt-2 text-xs leading-5">Select a test persona. The development password is <strong>demo</strong>.</p>
-          <select className="samtl-input mt-3" aria-label="Development persona" value={email} onChange={event => { setEmail(event.target.value); setPassword("demo"); setError(""); }}>
-            {personas.map(persona => <option key={persona.id} value={persona.email}>{persona.name} · {persona.role === "REGIONAL_MANAGER" ? "Regional Manager" : "Relationship Officer"}</option>)}
-          </select>
-        </details>
+        <div className="mt-6 flex gap-3 border-t border-[#E5E5E5] pt-5 text-xs leading-5 text-[#667085]">
+          <ShieldCheck size={18} className="mt-0.5 shrink-0 text-[#A51F27]" aria-hidden="true" />
+          <p>Access is limited to authorized staff. Contact an MIS administrator for account activation or approved password recovery.</p>
+        </div>
       </section>
     </main>
   );

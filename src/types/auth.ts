@@ -28,5 +28,12 @@ export interface AuthorizedScope {
 export interface Session {
   user: User;
   scope: AuthorizedScope;
+  sessionId: string;
+  issuedAt: string;
   expiresAt: string;
+  authProvider: "local" | "microsoft_entra" | "odoo_federation" | "enterprise_oidc" | "enterprise_saml";
+  mfaVerified: boolean;
+  mfaEnabled: boolean;
+  mustChangePassword: boolean;
+  permissions: string[];
 }

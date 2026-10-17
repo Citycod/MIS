@@ -7,7 +7,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open `http://localhost:3000/login` and select a demo persona. Lagos ROs are Adebayo Adeyemi and Chioma Okonkwo; Lagos manager is Babatunde Folorunsho; Abuja manager is Aisha Bello. The demo persona menu also provides Emeka Nwosu (Abuja RO).
+Open `http://localhost:3000/login` and sign in with an activated staff ID and local password. On a controlled first start, configure `MIS_BOOTSTRAP_ADMIN_USER_ID`, `MIS_BOOTSTRAP_PASSWORD` and `MIS_IDENTITY_ENCRYPTION_KEY`. Outside production, an omitted bootstrap password is generated once and written to the ignored `.local/mis-identity/bootstrap-credentials.txt` file with owner-only permissions. It must be changed at first sign-in.
 
 Dashboard snapshots cover Jan–Sep 2026 month-ends and 15 September 2026. Default: 30 September 2026. Unavailable dates/products show an empty state. Financial values are precomputed mock reporting outputs, not production calculations.
 
@@ -20,7 +20,9 @@ pnpm test:phase2
 
 Browser tests start the production server on port 3100 and use `/usr/bin/google-chrome`; set `CHROME_PATH` for another Chrome installation. Building first ensures tests use current source and fixtures. Some sandbox environments require permission for local worker/server ports and browser execution.
 
-Optional runtime `SESSION_SECRET` stabilizes signed **demo** sessions across processes. Without it, a random process-local secret invalidates sessions on restart. Production SSO, SQL-view access and Superset are outstanding integrations; do not connect real banking data to demo persona authentication. No runtime secret belongs in source control.
+Authentication uses stable internal MIS user IDs, scrypt-protected local credentials and opaque, revocable server sessions. Financial roles and organizational assignments remain independent of the authentication provider. Microsoft Entra ID, Odoo federation, enterprise OIDC and enterprise SAML are reserved but disabled until approved configuration and security validation are complete. No runtime secret belongs in source control.
+
+- [Identity runtime, bootstrap and future provider boundary](dev/identity/README.md)
 
 - [Phase 2 implementation, semantics and dependencies](doc/qa/phase2/IMPLEMENTATION.md)
 - [Screenshots](doc/qa/phase2/SCREENSHOTS.md)

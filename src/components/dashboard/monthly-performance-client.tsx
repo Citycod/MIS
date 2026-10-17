@@ -12,6 +12,7 @@ import { filterQuery } from "@/lib/filters";
 import { formatCurrency } from "@/lib/utils";
 import { MonthlyMovementTable } from "@/components/dashboard/monthly-movement-table";
 import { SupersetEmbed } from "@/components/superset/superset-embed";
+import { csrfFetch } from "@/lib/client/csrf";
 
 type Props = {
   filters: GlobalFilters;
@@ -98,7 +99,7 @@ export function MonthlyPerformanceClient({ filters, options, scope, source, kpis
   async function uploadCsv(form: FormData) {
     setUploading(true); setError(""); setMessage("");
     try {
-      const response = await fetch("/api/csv-import", { method: "POST", body: form });
+      const response = await csrfFetch("/api/csv-import", { method: "POST", body: form });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "CSV import failed.");
       const next = { ...draft, startDate: result.startDate, asOfDate: result.endDate, periodMode: "YTD" as const };

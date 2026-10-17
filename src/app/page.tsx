@@ -8,6 +8,10 @@ export default async function HomePage() {
     redirect("/login");
   }
 
+  if (session.mustChangePassword) {
+    redirect("/change-password");
+  }
+
   if (session.user.role === "REGIONAL_MANAGER") {
     redirect("/regional/dashboard?source=financial-sample");
   } else {

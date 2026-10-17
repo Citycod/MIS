@@ -3,10 +3,12 @@ import { getCurrentSession } from "@/lib/server/security/auth";
 import { createGuestToken } from "@/lib/server/superset/guest-token";
 import { FilterError, ScopeError } from "@/lib/server/security/scope";
 import { FILTER_KEYS } from "@/lib/filters";
+import { verifyCsrf } from "@/lib/server/security/csrf";
 
 export const runtime = "nodejs";
 const headers = { "Cache-Control": "private, no-store" };
 export async function POST(req: NextRequest) {
+  if (!verifyCsrf(req)) return NextResponse.json({ error: "Invalid security token." }, { status: 403, headers });
   const session = await getCurrentSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers });
   const origin = req.headers.get("origin");

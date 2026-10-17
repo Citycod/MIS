@@ -21,6 +21,9 @@ const catalog = {
   financial_sample_profitability: "BOTH",
   financial_sample_targets: "BOTH",
   financial_sample_export: "BOTH",
+  financial_sample_mpr_profitability: "BOTH",
+  financial_sample_mpr_accounts: "BOTH",
+  financial_sample_mpr_position: "BOTH",
 } as const;
 type Registry = {
   domain: string;
@@ -87,6 +90,9 @@ const FINANCIAL_SAMPLE_KEYS = new Set([
   "financial_sample_profitability",
   "financial_sample_targets",
   "financial_sample_export",
+  "financial_sample_mpr_profitability",
+  "financial_sample_mpr_accounts",
+  "financial_sample_mpr_position",
 ]);
 
 function financialSampleRlsClause(

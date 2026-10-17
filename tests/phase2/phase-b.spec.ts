@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { normalizeRoleView } from "../../src/lib/filters";
 import { getAssignedPrimaryRegion } from "../../src/lib/server/security/primary-region";
 import { MOCK_USERS } from "../../src/mocks/fixtures";
+import { csrfPost, loginAs } from "../helpers/auth";
 
 test("legacy Role View values stay presentation-only and unknown values fail safely", () => {
   for (const value of ["CFO", "ADMIN", "REGIONAL_MANAGER", "__proto__", undefined]) {
@@ -17,12 +18,12 @@ test("ambiguous regional assignment fails closed without an explicit primary reg
 });
 
 test("forged filters and CSV dashboard resources cannot expand an RO scope", async ({ page }) => {
-  expect((await page.request.post("/api/auth/login", { data: { userId: "USR-RO-001" } })).ok()).toBeTruthy();
+  await loginAs(page, "USR-RO-001");
   for (const filters of [
     { regionId: "REG-02", roId: "RO-001" },
     { regionId: "REG-01", roId: "RO-002" },
   ]) {
-    const response = await page.request.post("/api/superset/guest-token", {
+    const response = await csrfPost(page, "/api/superset/guest-token", {
       data: { dashboardKey: "csv_monthly_performance_review", filters: { ...filters, startDate: "2026-01-01", asOfDate: "2026-09-30", productCode: "PROD-ALL", periodMode: "YTD" } },
     });
     expect(response.status()).toBe(403);

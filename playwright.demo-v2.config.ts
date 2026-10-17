@@ -1,4 +1,8 @@
 import { defineConfig } from "@playwright/test";
+import { randomBytes } from "node:crypto";
+
+const e2ePassword = process.env.MIS_E2E_PASSWORD ??= `A9!${randomBytes(18).toString("base64url")}z`;
+const identityDatabase = process.env.MIS_IDENTITY_DB_PATH ??= `/tmp/mis-identity-demo-v2-${process.pid}.sqlite`;
 
 export default defineConfig({
   testDir: "./tests/demo-v2",
@@ -29,6 +33,10 @@ export default defineConfig({
       // issue a guest token. The real embedding suite opts in explicitly.
       PIS_SUPERSET_LOCAL_ENABLED: "false",
       NEXT_FONT_GOOGLE_MOCKED_RESPONSES: "/home/uplix/MIS/dev/next-font-mock.cjs",
+      MIS_IDENTITY_TEST_MODE: "true",
+      MIS_E2E_PASSWORD: e2ePassword,
+      MIS_IDENTITY_DB_PATH: identityDatabase,
+      MIS_IDENTITY_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
     },
   },
 });

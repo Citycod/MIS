@@ -5,6 +5,7 @@ This source is separate from Phase 2, demo-v2, and the nine-column CSV dashboard
 ```bash
 python3 dev/financial-sample/import_sample.py --cutoff 2026-10-10
 bash dev/superset/provision_financial_sample.sh
+bash dev/superset/provision_mpr_dashboards.sh
 ```
 
 The source product remains on every row. `product-mapping.json` applies the user-directed SAMTL presentation catalogue in a separate derived layer. `MAPPED_DEMO` means a synthetic presentation mapping; it does not claim production business equivalence. `SAMTL REIT` remains in the catalogue but has no source rows in this sample. Unknown future source products are retained as `UNMAPPED` and excluded from mapped product allocation charts.

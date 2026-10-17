@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Download, FileSpreadsheet, LoaderCircle, Presentation, Upload, X } from "lucide-react";
+import { csrfFetch } from "@/lib/client/csrf";
 
 type Props = {
   teamId: string;
@@ -25,7 +26,7 @@ export function MprExportPanel({ teamId, teamName, cutoff, canImport }: Props) {
   async function generate() {
     setGenerating(true); setError(""); setMessage("");
     try {
-      const response = await fetch("/api/mpr/export", {
+      const response = await csrfFetch("/api/mpr/export", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ teamId, cutoff, reportType: "monthly-performance-review", format: "pptx" }),
       });
@@ -46,7 +47,7 @@ export function MprExportPanel({ teamId, teamName, cutoff, canImport }: Props) {
   async function upload(formData: FormData) {
     setImporting(true); setError(""); setMessage("");
     try {
-      const response = await fetch("/api/mpr/import", { method: "POST", body: formData });
+      const response = await csrfFetch("/api/mpr/import", { method: "POST", body: formData });
       const body = await response.json().catch(() => null) as { error?: string; message?: string } | null;
       if (!response.ok) throw new Error(body?.error ?? "The source file could not be imported.");
       setMessage(body?.message ?? "The controlled source file was imported.");

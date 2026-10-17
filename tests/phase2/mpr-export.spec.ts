@@ -2,10 +2,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { expect, test, type Page } from "@playwright/test";
+import { csrfPost, loginAs } from "../helpers/auth";
 
 async function login(page: Page, userId: string, route: string) {
-  const response = await page.request.post("/api/auth/login", { data: { userId }, maxRetries: 1 });
-  expect(response.ok()).toBeTruthy();
+  await loginAs(page, userId);
   await page.goto(route);
 }
 
@@ -18,9 +18,9 @@ const exportRequest = {
 
 test.describe.serial("secure Monthly Performance Review export", () => {
   test("rejects anonymous and cross-team export requests", async ({ page }) => {
-    expect((await page.request.post("/api/mpr/export", { data: exportRequest })).status()).toBe(401);
+    expect((await csrfPost(page, "/api/mpr/export", { data: exportRequest })).status()).toBe(401);
     await login(page, "USR-RO-001", "/ro/reports");
-    const forbidden = await page.request.post("/api/mpr/export", { data: { ...exportRequest, teamId: "REG-02" } });
+    const forbidden = await csrfPost(page, "/api/mpr/export", { data: { ...exportRequest, teamId: "REG-02" } });
     expect(forbidden.status()).toBe(403);
     expect((await forbidden.json()).error).toContain("outside your authorized scope");
   });
@@ -31,8 +31,7 @@ test.describe.serial("secure Monthly Performance Review export", () => {
     await expect(page.getByLabel("Authorized team")).toBeDisabled();
     await expect(page.getByLabel("Reporting cutoff")).toHaveValue("2026-10-10");
     await expect(page.getByRole("button", { name: "Import source extract" })).toHaveCount(0);
-
-    const response = await page.request.post("/api/mpr/export", { data: exportRequest });
+    const response = await csrfPost(page, "/api/mpr/export", { data: exportRequest });
     expect(response.status()).toBe(200);
     expect(response.headers()["content-type"]).toContain("presentationml.presentation");
     expect(response.headers()["content-disposition"]).toContain("MIS-Demo-MPR-Lagos-2026-10-10.pptx");
@@ -41,7 +40,7 @@ test.describe.serial("secure Monthly Performance Review export", () => {
     expect(bytes.subarray(0, 2).toString()).toBe("PK");
     expect(bytes.byteLength).toBeGreaterThan(50_000);
 
-    const deniedImport = await page.request.post("/api/mpr/import", {
+    const deniedImport = await csrfPost(page, "/api/mpr/import", {
       multipart: {
         type: "odoo-targets",
         file: { name: "targets.csv", mimeType: "text/csv", buffer: Buffer.from("source_target_id\nDENIED") },
@@ -68,7 +67,7 @@ test.describe.serial("secure Monthly Performance Review export", () => {
       "source_target_id,reporting_year,target_period_start,target_period_end,team_id,ro_id,target_type,target_amount_ngn,currency,effective_date,source_version",
       "TARGET-X,2026,2026-01-01,2026-12-31,ABJ,RO-ABJ-01,NEW_TARGET_ANNUAL,1200000000,NGN,2026-01-01,test-v1",
     ].join("\n");
-    const rejected = await page.request.post("/api/mpr/import", {
+    const rejected = await csrfPost(page, "/api/mpr/import", {
       multipart: {
         type: "odoo-targets",
         file: { name: "outside-scope.csv", mimeType: "text/csv", buffer: Buffer.from(outsideScope) },
@@ -77,10 +76,10 @@ test.describe.serial("secure Monthly Performance Review export", () => {
     expect(rejected.status()).toBe(403);
     expect((await rejected.json()).error).toContain("outside your authorized team scope");
 
-    const response = await page.request.post("/api/mpr/export", { data: exportRequest });
+    const response = await csrfPost(page, "/api/mpr/export", { data: exportRequest });
     expect(response.status()).toBe(200);
     const bytes = await response.body();
-    const repeated = await page.request.post("/api/mpr/export", { data: exportRequest });
+    const repeated = await csrfPost(page, "/api/mpr/export", { data: exportRequest });
     expect(repeated.status()).toBe(200);
     const repeatedBytes = await repeated.body();
     expect(repeatedBytes.subarray(0, 2).toString()).toBe("PK");
@@ -97,14 +96,14 @@ test.describe.serial("secure Monthly Performance Review export", () => {
     ].join("\n");
     let importId = "";
     try {
-      const first = await page.request.post("/api/mpr/import", {
+      const first = await csrfPost(page, "/api/mpr/import", {
         multipart: { type: "odoo-targets", file: { name: "idempotent-targets.csv", mimeType: "text/csv", buffer: Buffer.from(completeTargets) } },
       });
       expect(first.status()).toBe(200);
       const firstResult = await first.json() as { importId: string; rows: number; idempotent: boolean };
       importId = firstResult.importId;
       expect(firstResult.rows).toBe(2);
-      const second = await page.request.post("/api/mpr/import", {
+      const second = await csrfPost(page, "/api/mpr/import", {
         multipart: { type: "odoo-targets", file: { name: "idempotent-targets.csv", mimeType: "text/csv", buffer: Buffer.from(completeTargets) } },
       });
       expect(second.status()).toBe(200);

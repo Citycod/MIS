@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, UserRound } from "lucide-react";
 import type { User } from "@/types/auth";
+import { csrfFetch } from "@/lib/client/csrf";
 
 const pageNames: Record<string, string> = {
   dashboard: "Management Information System", customers: "Customers", "concentration-risk": "Concentration Risk",
@@ -17,7 +18,7 @@ export function Topbar({ user }: { user: User }) {
   const title = pageNames[segment] ?? "Management Information System";
 
   async function logout() {
-    const response = await fetch("/api/auth/logout", { method: "POST" });
+    const response = await csrfFetch("/api/auth/logout", { method: "POST" });
     if (response.ok) {
       router.push("/login");
       router.refresh();

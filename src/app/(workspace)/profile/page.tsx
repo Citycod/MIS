@@ -1,5 +1,7 @@
 import { getCurrentSession } from "@/lib/server/security/auth";
 import { ShieldCheck } from "lucide-react";
+import { ChangePasswordForm } from "@/components/auth/change-password-form";
+import { MfaEnrollment } from "@/components/auth/mfa-enrollment";
 
 export default async function ProfilePage() {
   const session = await getCurrentSession();
@@ -48,6 +50,22 @@ export default async function ProfilePage() {
             <strong className="text-[#24252B]">{user.branchName || "Regional Office"}</strong>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl border border-[#E4E7EC] shadow-xs space-y-4">
+        <div>
+          <h3 className="font-bold text-sm text-[#24252B]">Password</h3>
+          <p className="mt-1 text-xs leading-5 text-[#667085]">Changing your password revokes your other active sessions.</p>
+        </div>
+        <ChangePasswordForm />
+      </div>
+
+      <div className="bg-white p-6 rounded-xl border border-[#E4E7EC] shadow-xs space-y-4">
+        <div>
+          <h3 className="font-bold text-sm text-[#24252B]">Multi-factor authentication</h3>
+          <p className="mt-1 text-xs leading-5 text-[#667085]">Use an approved TOTP authenticator app as a second sign-in factor.</p>
+        </div>
+        <MfaEnrollment enabled={session.mfaEnabled} privileged={session.permissions.includes("identity.users.manage")} />
       </div>
     </div>
   );

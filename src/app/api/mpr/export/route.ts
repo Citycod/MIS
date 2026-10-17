@@ -3,6 +3,8 @@ import { getCurrentSession } from "@/lib/server/security/auth";
 import { ScopeError } from "@/lib/server/security/scope";
 import { generateMprPresentation } from "@/lib/server/mpr/presentation";
 import { getMprReportData, MprReportError } from "@/lib/server/mpr/reporting";
+import { requestNetworkContext, verifyCsrf } from "@/lib/server/security/csrf";
+import { recordAudit } from "@/lib/server/identity/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +26,7 @@ function safeFilePart(value: string) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!verifyCsrf(request)) return NextResponse.json({ error: "Invalid security token." }, { status: 403, headers: PRIVATE_HEADERS });
   const session = await getCurrentSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: PRIVATE_HEADERS });
   if (!sameOrigin(request)) return NextResponse.json({ error: "Invalid origin" }, { status: 403, headers: PRIVATE_HEADERS });
@@ -42,6 +45,7 @@ export async function POST(request: NextRequest) {
       cutoff: report.reportingCutoff, classification: report.synthetic ? "SYNTHETIC_DEMO_ONLY" : "CONTROLLED_SOURCE_IMPORT",
       teamRows: report.rows.length, presentationBytes: presentation.byteLength,
     });
+    recordAudit({ ...requestNetworkContext(request), actorUserId: session.user.id }, "reporting.mpr.exported", "success", "team", report.teamId, { cutoff: report.reportingCutoff, rows: report.rows.length });
     const prefix = report.synthetic ? "MIS-Demo-MPR" : "SAMTL-MPR";
     const filename = `${prefix}-${safeFilePart(report.teamName)}-${report.reportingCutoff}.pptx`;
     return new NextResponse(new Uint8Array(presentation), {

@@ -1,16 +1,17 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { csrfPost, loginAs } from "../helpers/auth";
 
 const registry = JSON.parse(readFileSync(".local/superset/demo-v2-registry.json", "utf8"));
 const defaultFilters = { regionId: "LAG", roId: "RO-LAG-01", asOfDate: "2026-10-10", productCode: "PROD-ALL", periodMode: "MTD" };
 
 async function login(page: Page, userId: string, route: string) {
-  expect((await page.request.post("/api/auth/login", { data: { userId } })).ok()).toBeTruthy();
+  await loginAs(page, userId);
   await page.goto(route, { waitUntil: "domcontentloaded" });
 }
 
 async function token(page: Page, key: string, filters = defaultFilters) {
-  const response = await page.request.post("/api/superset/guest-token", { data: { dashboardKey: key, filters } });
+  const response = await csrfPost(page, "/api/superset/guest-token", { data: { dashboardKey: key, filters } });
   expect(response.status(), await response.text()).toBe(200);
   return response.json() as Promise<{ token: string; dashboardId: string; supersetDomain: string }>;
 }
@@ -72,10 +73,10 @@ async function rendered(page: Page, count: number) {
 }
 
 test("guest tokens bind each demo-v2 reporting filter and reject unauthorized resources", async ({ page }) => {
-  expect((await page.request.post("/api/superset/guest-token", { data: {} })).status()).toBe(401);
+  expect((await csrfPost(page, "/api/superset/guest-token", { data: {} })).status()).toBe(401);
   await login(page, "USR-RO-001", "/ro/dashboard");
-  expect((await page.request.post("/api/superset/guest-token", { data: { dashboardKey: "ro_overview:movement", filters: { ...defaultFilters, roId: "RO-LAG-02" } } })).status()).toBe(403);
-  expect((await page.request.post("/api/superset/guest-token", { data: { dashboardKey: "regional_overview:movement", filters: defaultFilters } })).status()).toBe(403);
+  expect((await csrfPost(page, "/api/superset/guest-token", { data: { dashboardKey: "ro_overview:movement", filters: { ...defaultFilters, roId: "RO-LAG-02" } } })).status()).toBe(403);
+  expect((await csrfPost(page, "/api/superset/guest-token", { data: { dashboardKey: "regional_overview:movement", filters: defaultFilters } })).status()).toBe(403);
   const guest = await token(page, "ro_overview:movement");
   const lensGuest = await token(page, "ro_overview:movement", { ...defaultFilters, roleView: "investment-breakdown" } as typeof defaultFilters);
   const unknownLensGuest = await token(page, "ro_overview:movement", { ...defaultFilters, roleView: "CFO" } as typeof defaultFilters);
@@ -132,7 +133,7 @@ test("regional RLS retains only the authorized officers", async ({ page }) => {
   const rowsForLag = await rows(page, "regional_overview:ro_position_target", { ...defaultFilters, roId: "ALL" });
   expect(rowsForLag).toHaveLength(4);
   expect(rowsForLag.every(row => String(row.ro_name).includes("Lagos"))).toBeTruthy();
-  const forbidden = await page.request.post("/api/superset/guest-token", { data: { dashboardKey: "regional_overview:movement", filters: { ...defaultFilters, regionId: "ABJ", roId: "ALL" } } });
+  const forbidden = await csrfPost(page, "/api/superset/guest-token", { data: { dashboardKey: "regional_overview:movement", filters: { ...defaultFilters, regionId: "ABJ", roId: "ALL" } } });
   expect(forbidden.status()).toBe(403);
 });
 

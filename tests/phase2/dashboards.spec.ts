@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import fixtures from "../../src/mocks/dashboard-snapshots.json";
+import { csrfPost, loginAs } from "../helpers/auth";
 
 async function login(page: Page, userId: string, route?: string) {
-  const response = await page.request.post("/api/auth/login", { data: { userId }, maxRetries: 1 });
-  expect(response.ok()).toBeTruthy();
+  await loginAs(page, userId);
   await page.goto(route || (userId.includes("RM") ? "/regional/dashboard" : "/ro/dashboard"));
 }
 
@@ -29,7 +29,7 @@ test("precomputed Phase 2 fixtures still reconcile", () => {
 test("anonymous and cross-scope dashboard requests fail closed", async ({ page, context }) => {
   await page.goto("/ro/dashboard");
   await expect(page).toHaveURL(/\/login$/);
-  await context.addCookies([{ name: "pis_session", value: "USR-RO-001", domain: "127.0.0.1", path: "/" }]);
+  await context.addCookies([{ name: "mis_session", value: "USR-RO-001", domain: "127.0.0.1", path: "/" }]);
   await page.goto("/ro/dashboard");
   await expect(page).toHaveURL(/\/login$/);
   await login(page, "USR-RO-001");
@@ -113,7 +113,7 @@ test("CSV template and authorized synthetic upload switch to the isolated Supers
   await expectSupersetCharts(page);
 
   const denied = csv.replaceAll("RO-001", "RO-002").replaceAll("Adebayo Adeyemi", "Chioma Okonkwo");
-  const response = await page.request.post("/api/csv-import", {
+  const response = await csrfPost(page, "/api/csv-import", {
     multipart: { file: { name: "unauthorized.csv", mimeType: "text/csv", buffer: Buffer.from(denied) } },
   });
   expect(response.status()).toBe(400);

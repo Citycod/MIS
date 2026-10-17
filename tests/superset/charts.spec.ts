@@ -1,14 +1,15 @@
 import { test, expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import fixtures from "../../src/mocks/dashboard-snapshots.json";
+import { csrfPost, loginAs } from "../helpers/auth";
 const registry = JSON.parse(readFileSync(".local/superset/registry.json", "utf8"));
 const defaultFilters = { regionId: "REG-01", roId: "RO-001", asOfDate: "2026-09-30", productCode: "PROD-ALL", periodMode: "MTD" };
 async function login(page: Page, userId: string, query = "") {
-  expect((await page.request.post("/api/auth/login", { data: { userId }, maxRetries: 1 })).ok()).toBeTruthy();
+  await loginAs(page, userId);
   await page.goto(`${userId.includes("RM") ? "/regional/dashboard" : "/ro/dashboard"}${query}`);
 }
 async function token(page: Page, key: string, filters = defaultFilters) {
-  const response = await page.request.post("/api/superset/guest-token", { data: { dashboardKey: key, filters } });
+  const response = await csrfPost(page, "/api/superset/guest-token", { data: { dashboardKey: key, filters } });
   expect(response.status()).toBe(200);
   expect(response.headers()["cache-control"]).toContain("no-store");
   return response.json();
@@ -51,18 +52,18 @@ async function rendered(page: Page, count: number) {
 }
 
 test("broker rejects anonymous access, malformed filters and unauthorized scopes", async ({ page }) => {
-  expect((await page.request.post("/api/superset/guest-token", { data: {} })).status()).toBe(401);
+  expect((await csrfPost(page, "/api/superset/guest-token", { data: {} })).status()).toBe(401);
   await login(page, "USR-RO-001");
   for (const filters of [{ ...defaultFilters, roId: "RO-002" }, { ...defaultFilters, regionId: "REG-02" }]) {
-    expect((await page.request.post("/api/superset/guest-token", { data: { dashboardKey: "investment_mix", filters } })).status()).toBe(403);
+    expect((await csrfPost(page, "/api/superset/guest-token", { data: { dashboardKey: "investment_mix", filters } })).status()).toBe(403);
   }
   for (const key of ["regional_overview:movement", "unknown", "__proto__"]) {
-    expect((await page.request.post("/api/superset/guest-token", { data: { dashboardKey: key, filters: defaultFilters } })).status()).toBe(403);
+    expect((await csrfPost(page, "/api/superset/guest-token", { data: { dashboardKey: key, filters: defaultFilters } })).status()).toBe(403);
   }
   for (const filters of [{ ...defaultFilters, periodMode: "ALL" }, { ...defaultFilters, roId: ["RO-001"] }, { ...defaultFilters, productCode: "x' OR 1=1 --" }]) {
-    expect((await page.request.post("/api/superset/guest-token", { data: { dashboardKey: "investment_mix", filters } })).status()).toBe(400);
+    expect((await csrfPost(page, "/api/superset/guest-token", { data: { dashboardKey: "investment_mix", filters } })).status()).toBe(400);
   }
-  expect((await page.request.post("/api/superset/guest-token", { headers: { Origin: "https://untrusted.invalid" }, data: { dashboardKey: "investment_mix", filters: defaultFilters } })).status()).toBe(403);
+  expect((await csrfPost(page, "/api/superset/guest-token", { headers: { Origin: "https://untrusted.invalid" }, data: { dashboardKey: "investment_mix", filters: defaultFilters } })).status()).toBe(403);
 });
 
 test("Superset guest queries reconcile with RO fixtures across date, product and MTD/YTD", async ({ page }) => {

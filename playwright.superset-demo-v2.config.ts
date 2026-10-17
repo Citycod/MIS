@@ -1,4 +1,8 @@
 import { defineConfig } from "@playwright/test";
+import { randomBytes } from "node:crypto";
+
+const e2ePassword = process.env.MIS_E2E_PASSWORD ??= `A9!${randomBytes(18).toString("base64url")}z`;
+const identityDatabase = process.env.MIS_IDENTITY_DB_PATH ??= `/tmp/mis-identity-superset-demo-v2-${process.pid}.sqlite`;
 
 export default defineConfig({
   testDir: "./tests/superset-demo-v2",
@@ -30,6 +34,10 @@ export default defineConfig({
       PIS_SUPERSET_LOCAL_ENABLED: "true",
       SESSION_SECRET: "demo-v2-superset-playwright-session-secret",
       NEXT_FONT_GOOGLE_MOCKED_RESPONSES: "/home/uplix/MIS/dev/next-font-mock.cjs",
+      MIS_IDENTITY_TEST_MODE: "true",
+      MIS_E2E_PASSWORD: e2ePassword,
+      MIS_IDENTITY_DB_PATH: identityDatabase,
+      MIS_IDENTITY_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
     },
   },
 });
